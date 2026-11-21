@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
 
-project(BiblioLED VERSION 0.1.0 LANGUAGES C CXX)
+project(BiblioLED VERSION 1.0.0 LANGUAGES C CXX)
 
 include(CTest)
 

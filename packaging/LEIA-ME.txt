@@ -1,0 +1,40 @@
+BiblioLED 1.0.0 — candidato para Windows XP SP3 (32 bits)
+
+BiblioLED é uma aplicação pessoal para registar e gerir empréstimos BiblioLED.
+Não é software de gestão de bibliotecas públicas ou institucionais.
+
+INSTALAÇÃO
+
+1. Extraia o conteúdo completo do ZIP para uma pasta própria com permissões de escrita.
+2. Execute BiblioLED.exe. Não é necessária instalação nem conta de administrador.
+3. Para actualizar, feche a aplicação, substitua os ficheiros do programa e preserve
+   config, data, exports e logs. Faça primeiro uma cópia de segurança externa.
+
+DADOS E DEFINIÇÕES
+
+- config\settings.ini: limites, duração dos empréstimos e preferências.
+- data\biblioteca.sqlite: registos e auditoria interna.
+- data\backups: cópias automáticas e manuais.
+- exports: ficheiros CSV exportados.
+- logs\audit.log: registo externo de auditoria, quando activado.
+
+Estes ficheiros ficam junto do executável. Não apague nem substitua a base de dados,
+as definições, as cópias ou os registos ao actualizar o programa. A exportação CSV
+não substitui uma cópia de segurança da base de dados.
+
+CÓPIAS DE SEGURANÇA E RESTAURO
+
+A aplicação cria uma cópia automática antes da primeira alteração de empréstimos
+em cada dia local. Também é possível criar uma cópia manual em Ficheiro > Criar
+cópia de segurança. O restauro pede confirmação e cria primeiro uma cópia de
+segurança da base de dados actual. Guarde cópias importantes também noutro suporte.
+
+COMPATIBILIDADE
+
+Este pacote destina-se a Windows XP SP3 de 32 bits. O executável é compilado para
+PE32/i386 e subsistema Windows 5.01. O pacote não inclui uma base de dados nem dados
+de exemplo.
+
+Este é um pacote candidato. Antes de guardar dados importantes, confirme que o
+programa inicia correctamente no seu computador e mantenha cópias de segurança
+independentes.

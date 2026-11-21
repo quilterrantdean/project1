@@ -301,6 +301,67 @@ jobs:
             throw "The Portuguese test guide must be UTF-8 with BOM for Windows XP Notepad."
           }
 
+      - name: Package portable XP release candidate
+        shell: pwsh
+        run: |
+          $project = Get-Content "CMakeLists.txt" -Raw
+          if ($project -notmatch 'project\(BiblioLED VERSION ([0-9]+\.[0-9]+\.[0-9]+) LANGUAGES') {
+            throw "Could not read the BiblioLED version from CMakeLists.txt."
+          }
+          $version = $Matches[1]
+          $root = Join-Path $env:RUNNER_TEMP "BiblioLED-$version-XP-x86"
+          $config = Join-Path $root "config"
+          $output = Join-Path $env:RUNNER_TEMP "BiblioLED-$version-XP-x86-candidate"
+          New-Item -ItemType Directory -Force -Path $config, $output | Out-Null
+
+          Copy-Item "build\xp-x86-w64devkit\BiblioLED.exe" (Join-Path $root "BiblioLED.exe")
+          Copy-Item "config\settings.ini" (Join-Path $config "settings.ini")
+          Get-Content "packaging\LEIA-ME.txt" -Raw |
+            Set-Content -Path (Join-Path $root "LEIA-ME.txt") -Encoding utf8BOM
+
+          $zip = Join-Path $output "BiblioLED-$version-XP-x86.zip"
+          Compress-Archive -Path (Join-Path $root "*") -DestinationPath $zip -CompressionLevel Optimal
+
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive = [System.IO.Compression.ZipFile]::OpenRead($zip)
+          try {
+            $actual = @($archive.Entries |
+              Where-Object { $_.Name -ne "" } |
+              ForEach-Object { $_.FullName } |
+              Sort-Object)
+            $expected = @("BiblioLED.exe", "LEIA-ME.txt", "config/settings.ini") | Sort-Object
+            if (Compare-Object $expected $actual) {
+              throw "Portable ZIP contents differ from the three-file release manifest."
+            }
+            if ($actual | Where-Object { $_ -match '(^|/)(data|exports|logs)(/|$)|\.sqlite($|-)' }) {
+              throw "The portable ZIP contains runtime data or a database."
+            }
+          }
+          finally {
+            $archive.Dispose()
+          }
+
+          $hash = (Get-FileHash -Path $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $(Split-Path $zip -Leaf)" |
+            Set-Content -Path (Join-Path $output "SHA256SUMS.txt") -Encoding ascii
+          @(
+            "Version: $version",
+            "Target: Windows XP SP3, 32-bit (i386), GUI subsystem 5.01",
+            "Source commit: $env:GITHUB_SHA",
+            "Workflow run: $env:GITHUB_RUN_ID",
+            "SHA-256: $hash",
+            "Package contents: BiblioLED.exe, config/settings.ini, LEIA-ME.txt",
+            "Status: release candidate; not an official GitHub release"
+          ) | Set-Content -Path (Join-Path $output "build-info.txt") -Encoding utf8BOM
+
+      - name: Upload portable XP release candidate
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2, Node 24
+        with:
+          name: BiblioLED-1.0.0-XP-x86-candidate
+          path: ${{ runner.temp }}/BiblioLED-1.0.0-XP-x86-candidate/
+          if-no-files-found: error
+          retention-days: 90
+
       - name: Upload disposable XP test build
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2, Node 24
         with:
