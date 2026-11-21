@@ -11,6 +11,7 @@ The repository-root `AGENTS.md` is the agent instruction entry point. It directs
 - `architecture.md` — proposed component boundaries and portable directory layout.
 - `codebase-review.md` — factual review of the existing implementation and known issues.
 - `handoff.md` — current-session state, verified CI status, and next steps for a new session.
+- `autonomous-testing-plan.md` — agreed scope, safety rules, proposed XP test bundle/runner, and milestones for testing the latest build on real XP hardware.
 
 ## Current handoff
 
