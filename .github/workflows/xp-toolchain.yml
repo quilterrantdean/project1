@@ -57,6 +57,32 @@ jobs:
           & (Join-Path $bin "gcc.exe") --version
           & (Join-Path $bin "g++.exe") --version
 
+          $probeSource = @'
+          #include <ctime>
+          #include <iostream>
+          int main() {
+              std::tm value = {};
+              value.tm_year = 2099 - 1900;
+              value.tm_mon = 2;
+              value.tm_mday = 1;
+              value.tm_hour = 10;
+              value.tm_isdst = -1;
+              const std::time_t converted = std::mktime(&value);
+              std::cout << "sizeof(time_t)=" << sizeof(std::time_t)
+                        << "; mktime(2099-03-01 10:00)="
+                        << static_cast<long long>(converted) << std::endl;
+              return 0;
+          }
+          '@
+          $probe = Join-Path $env:RUNNER_TEMP "xp-time-range-probe.cpp"
+          $probeExe = Join-Path $env:RUNNER_TEMP "xp-time-range-probe.exe"
+          $probeSource | Set-Content -Path $probe -Encoding ascii
+          & (Join-Path $bin "g++.exe") $probe -o $probeExe
+          if ($LASTEXITCODE -ne 0) { throw "Could not compile the XP date-range probe." }
+          $probeResult = & $probeExe
+          if ($LASTEXITCODE -ne 0) { throw "Could not run the XP date-range probe." }
+          Write-Output "::notice title=XP date-range probe::$probeResult"
+
       - name: Configure XP-targeted build
         run: cmake --preset xp-x86-w64devkit
 
