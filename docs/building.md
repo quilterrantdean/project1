@@ -124,12 +124,12 @@ The Windows/XP test set comprises:
 
 ### Latest validated build
 
-The latest source on this repository's release-candidate branch is commit `c1b5a0b3fdc21280c2ac83fb57ab7a30a350718f`.
+The latest release-candidate source is commit `d13c767dacaf4bbc717f59ff248f5bd6004c7fd3`.
 
-- XP-targeted build/package [run 44938467176](https://github.com/quilterrantdean/project1/actions/runs/44938467176) passed: pinned w64devkit x86 2.10.0 build, all 9 tests, PE32/i386, GUI subsystem 5.01, import/API checks, and both package uploads.
+- XP-targeted build/package [run 44939158463](https://github.com/quilterrantdean/project1/actions/runs/44939158463) passed: pinned w64devkit x86 2.10.0 build, all 9 tests, PE32/i386, GUI subsystem 5.01, import/API checks, and both package uploads.
 - Core run [44938469974](https://github.com/quilterrantdean/project1/actions/runs/44938469974) passed Ubuntu tests, modern Win32 build/store tests, and Cppcheck 2.19.0.
-- Candidate ZIP artifact [`BiblioLED-1.0.0-XP-x86-candidate`](https://github.com/quilterrantdean/project1/actions/runs/44938467176/artifacts/14721051380): 1,570,181 bytes. It contains `BiblioLED.exe`, `config/settings.ini`, and `LEIA-ME.txt`; CI verifies the manifest and rejects databases, backups, exports and logs. The workflow artifact also includes `SHA256SUMS.txt` and `build-info.txt` outside the ZIP.
-- Disposable test artifact [`BiblioLED-XP-PoC`](https://github.com/quilterrantdean/project1/actions/runs/44938467176/artifacts/14721051383): 1,565,153 bytes; includes PE report and the detailed test guide.
+- Candidate ZIP artifact [`BiblioLED-1.0.0-XP-x86-candidate`](https://github.com/quilterrantdean/project1/actions/runs/44939158463/artifacts/14720004028): 1,570,195 bytes. ZIP SHA-256: `5c4ae7225d520b8262d8e74f9b6252827ae502a5fa8d0e14b1920697b149ba8e`. It contains `BiblioLED.exe`, `config/settings.ini`, and `LEIA-ME.txt`; CI verifies the manifest and rejects databases, backups, exports and logs. The workflow artifact also includes `SHA256SUMS.txt` and `build-info.txt` outside the ZIP.
+- Disposable test artifact [`BiblioLED-XP-PoC`](https://github.com/quilterrantdean/project1/actions/runs/44939158463/artifacts/14720917049): 1,565,152 bytes; includes PE report and the detailed test guide.
 
 The user reports that XP target testing was successful, but the exact tested artifact/hash and scenario list are not yet recorded. The versioned candidate ZIP must be extracted and smoke-tested in a fresh folder before an official release.
 
