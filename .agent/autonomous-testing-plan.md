@@ -9,7 +9,7 @@ Confirmed preferences:
 - The XP machine is locally accessible and can stay logged in with the desktop unlocked during testing.
 - Target display resolution is 800 x 600.
 - Run full headless/integration test coverage where practical. GUI automation is not currently selected; UI coverage remains a short manual checklist.
-- The XP machine has a portable 32-bit Python 3.10 backport; standard-library-only scripts are preferred. The exact distribution name/build is still to be recorded. Smoke-test its version, architecture and standard-library imports before relying on it.
+- Python 3.4.4 is the version found on `PATH`. The user identifies an XP-compatible Python 3.10 at `C:\\Python31018\\python.exe`, not on `PATH`, and prefers standard-library-only tooling. If selected, invoke that interpreter explicitly in the runner (or set a process-local `PATH`); avoid changing the machine-wide `PATH`. Smoke-test its version, architecture and standard-library imports before relying on it.
 - Use only isolated synthetic databases and disposable folders. Remove temporary data after a fully successful run; retain the run folder, logs and failure artifacts if any test fails.
 - Include stress and deliberately induced failures where safe. Do not use the real application installation or data, and do not mistake forced process termination for physical power-loss testing.
 
@@ -69,4 +69,4 @@ First audit current test binaries' temporary-directory behavior and exit codes. 
 
 ## Remaining environment check
 
-The user confirms the XP-side Python is a portable 32-bit Python 3.10 backport and prefers standard-library-only tooling. Use it as the primary runner, with a batch launcher if useful. Before implementation depends on it, record the exact distribution/build and run a tiny smoke check for version, architecture, subprocess execution, filesystem operations, JSON and hashing on the XP machine. AutoIt/AutoHotkey and GUI automation libraries are not selected; GUI smoke remains manual for now.
+Use `C:\\Python31018\\python.exe` explicitly as the preferred XP-side interpreter; Python 3.4.4 remains the version on `PATH` and a fallback if the 3.10 smoke check fails. A batch launcher can call the explicit executable without changing the machine-wide `PATH`. Before relying on it, run a tiny smoke check for version, architecture, subprocess execution, filesystem operations, JSON and hashing on XP. AutoIt/AutoHotkey and GUI automation libraries are not selected; GUI smoke remains manual for now.
