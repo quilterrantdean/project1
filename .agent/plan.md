@@ -2,7 +2,7 @@
 
 ## Current status
 
-**Stage:** 1.0.0 portable release candidate validated by CI and user-reported target testing. The user now confirms the candidate test was OK. The exact tested ZIP hash, XP hardware/OS details and manual scenarios remain unrecorded, so artifact traceability is still an open release-review item. This remains a candidate, not an official supported release.
+**Stage:** 1.0.0 portable release candidate validated by CI and user-reported XP testing. The user clarified that testing is always on the latest build in XP, the focus through 1.0.0, and confirmed the latest candidate test was OK. Associate the report with XP run 44939158463 and its recorded ZIP hash; detailed hardware/OS information and scenario list remain unspecified. This remains a candidate, not an official supported release.
 
 - Latest XP build/package [44939158463](https://github.com/quilterrantdean/project1/actions/runs/44939158463) passed on commit `d13c767dacaf4bbc717f59ff248f5bd6004c7fd3`: pinned w64devkit x86 build, 9/9 tests, PE32/i386, GUI subsystem 5.01, import/API checks, disposable test artifact, and portable ZIP content validation. Candidate artifact [`BiblioLED-1.0.0-XP-x86-candidate`](https://github.com/quilterrantdean/project1/actions/runs/44939158463/artifacts/14720004028) is 1,570,195 bytes; ZIP SHA-256 is `5c4ae7225d520b8262d8e74f9b6252827ae502a5fa8d0e14b1920697b149ba8e`.
 - Core run [44938469974](https://github.com/quilterrantdean/project1/actions/runs/44938469974) passed Ubuntu tests, modern Win32 compile/store tests, and Cppcheck.
@@ -27,8 +27,8 @@ The statements in the original project plan about creating and working on an ups
 - The core now represents loan timestamps as 64-bit `LoanTimestamp` and uses the Windows 64-bit CRT conversions `_mktime64` / `_localtime64`. The XP suite again uses 2099 fixtures and now passes, including parse/format round-trip and loan-store operations.
 - Local Linux validation using `g++ -std=c++11 -Wall -Wextra -Wpedantic` passed application-path, settings-store, CSV-export, loan-rules, and loan-statistics tests. Full SQLite-store and zlib backup tests still require development headers/libraries absent from this workspace; Debian package access is blocked, so those remain covered by GitHub CI.
 - Latest XP run [44935522857](https://github.com/quilterrantdean/project1/actions/runs/44935522857) and Core run [44935525364](https://github.com/quilterrantdean/project1/actions/runs/44935525364) both passed on commit `ea2a7b5a9ded70390238335b92343f0ca3e9fd3b`. XP artefact `BiblioLED-XP-PoC` is 1,565,153 bytes.
-- The user confirms candidate testing was OK. The tested artifact's SHA-256, hardware details and scenario list were not provided; do not infer which cases were exercised.
-- A portable 1.0.0 candidate ZIP passed CI package validation and the user reports a successful target test. Remaining work is release traceability and target-hardware performance measurement; never use real application data in automated tests.
+- The user clarified that tests are always performed against the latest build on Windows XP, the active focus through version 1.0.0, and confirmed the latest candidate test was OK. Associate this with XP run 44939158463 and its ZIP hash above; hardware details and scenario-by-scenario results were not provided.
+- A portable 1.0.0 candidate ZIP passed CI package validation and the user reports a successful XP test. Remaining work includes performance measurement and release review; never use real application data in automated tests.
 
 ## Agreed product direction
 

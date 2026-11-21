@@ -77,7 +77,7 @@ No real user database, settings file or personal records have been opened, copie
 
 BiblioLED is now in `quilterrantdean/project1`; PRs #1 and #2 were merged to `main`. Continue only on the active Arena branch. Historical upstream instructions about the `development` branch do not override the active session branch.
 
-The user now confirms that candidate testing was OK. They have not identified the exact tested artifact/hash or provided the scenario matrix, so record this as user-reported success without inventing an artifact binding or test details.
+The user clarified that tests are always performed against the latest build in XP, the project's focus through 1.0.0, and confirmed the latest candidate test was OK. Associate that report with XP run 44939158463 and its recorded ZIP hash. Hardware details and a scenario matrix were not supplied; do not infer them.
 
 Current candidate XP run [44939158463](https://github.com/quilterrantdean/project1/actions/runs/44939158463) passed on commit `d13c767dacaf4bbc717f59ff248f5bd6004c7fd3`; Core run [44938469974](https://github.com/quilterrantdean/project1/actions/runs/44938469974) also passed on the source-only changes. XP: 9/9 tests, PE32/i386, subsystem 5.01, import/API checks and package manifest validation. The artifact [`BiblioLED-1.0.0-XP-x86-candidate`](https://github.com/quilterrantdean/project1/actions/runs/44939158463/artifacts/14720004028) is 1,570,195 bytes; its ZIP SHA-256 is `5c4ae7225d520b8262d8e74f9b6252827ae502a5fa8d0e14b1920697b149ba8e`. It contains exactly the EXE, default INI and user guide; the workflow package also includes the hash and build metadata outside the ZIP.
 

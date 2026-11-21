@@ -4,7 +4,7 @@
 
 BiblioLED is being rewritten as a native C++11 / Win32 / SQLite application. The intended Windows target is **32-bit Windows XP SP3**, including Pentium 4/SSE2 hardware.
 
-The application is at **1.0.0 release-candidate** stage. It implements loan CRUD, history/statistics, CSV export, settings, compressed backup/restore, retention, SQLite schema migration, guided recovery, and internal/external audit logging. The user reported on 2026-11-21 that target-machine testing was successful and has now confirmed that the candidate test was OK. The exact tested ZIP hash, hardware/OS details, and scenario-by-scenario matrix were not supplied, so the report cannot yet be independently tied to a particular artifact.
+The application is at **1.0.0 release-candidate** stage. It implements loan CRUD, history/statistics, CSV export, settings, compressed backup/restore, retention, SQLite schema migration, guided recovery, and internal/external audit logging. The user clarified that XP testing is always performed against the latest build, with Windows XP as the active target through 1.0.0. They report the latest candidate test was OK. The latest XP candidate run is 44939158463 (ZIP SHA-256 `5c4ae7225d520b8262d8e74f9b6252827ae502a5fa8d0e14b1920697b149ba8e`). Hardware/OS details and a scenario-by-scenario matrix were not supplied; the test convention is to validate the newest build, not an older artifact.
 
 The XP workflow produces a separate, three-file candidate ZIP with SHA-256/build metadata. This is not an official GitHub Release. Do not put real database contents in the package; automated tests use isolated synthetic databases.
 
@@ -131,7 +131,7 @@ The latest release-candidate source is commit `d13c767dacaf4bbc717f59ff248f5bd60
 - Candidate ZIP artifact [`BiblioLED-1.0.0-XP-x86-candidate`](https://github.com/quilterrantdean/project1/actions/runs/44939158463/artifacts/14720004028): 1,570,195 bytes. ZIP SHA-256: `5c4ae7225d520b8262d8e74f9b6252827ae502a5fa8d0e14b1920697b149ba8e`. It contains `BiblioLED.exe`, `config/settings.ini`, and `LEIA-ME.txt`; CI verifies the manifest and rejects databases, backups, exports and logs. The workflow artifact also includes `SHA256SUMS.txt` and `build-info.txt` outside the ZIP.
 - Disposable test artifact [`BiblioLED-XP-PoC`](https://github.com/quilterrantdean/project1/actions/runs/44939158463/artifacts/14720917049): 1,565,152 bytes; includes PE report and the detailed test guide.
 
-The user has now confirmed that candidate testing was OK. Since they did not provide a hash or test record, we cannot prove which precise artifact or scenarios this covers; retain that traceability gap for release review.
+The user clarified that testing is always performed on the latest build in XP, the project's focus through 1.0.0. They confirmed the latest candidate test was OK. For traceability, associate that report with the latest XP run/ZIP listed above; the exact exercised scenarios and hardware details remain unspecified.
 
 ### Portable release-candidate packaging
 
@@ -302,7 +302,7 @@ The 1.0.0 candidate ZIP is available as a workflow artifact, not an official rel
 ### Build and compatibility
 - [x] Run Core CI on the 1.0.0 candidate: Linux, modern Win32 and Cppcheck all pass in run 44938469974.
 - [x] Run the manual XP-targeted workflow on the candidate commit; all 9 tests, PE32/i386, GUI subsystem 5.01, import/API checks, and exact ZIP manifest validation passed in run 44939158463 (commit `d13c767`).
-- [x] User confirms candidate testing was OK. Exact ZIP SHA-256, XP SP3 hardware/OS details and scenario results remain unrecorded; do not claim these were independently verified.
+- [x] User confirms XP testing is always on the latest build and that the latest candidate test was OK. Associate with run 44939158463 and its ZIP hash recorded above; machine details and individual scenario results were not supplied.
 - [ ] Verify all windows/dialogs, Portuguese text, icons, keyboard shortcuts, 800×600, sorting, history, statistics and CSV export.
 - [ ] Measure cold-start time, peak memory, executable size and responsiveness on the target machine.
 
@@ -319,5 +319,5 @@ The 1.0.0 candidate ZIP is available as a workflow artifact, not an official rel
 - [x] Produce a clean portable 1.0.0 candidate ZIP with executable, default settings and user instructions only; CI validates its exact manifest and absence of runtime data.
 - [ ] Verify launch from a path with spaces/accents and from a different working directory.
 - [x] Include version 1.0.0, Portuguese user instructions, candidate build metadata and a SHA-256 checksum in the CI artifact; the candidate remains unpublished as an official release.
-- [x] User reports the candidate test was OK; exact ZIP hash and fresh-folder/test details still need to be added to the release record.
+- [x] User confirms the latest XP build was tested successfully. Latest tested candidate is associated with run 44939158463; detailed test scenarios and target-machine specifications remain undocumented.
 - [ ] Review branch, commit, release files and documentation; keep `main` unchanged.
