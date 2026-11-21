@@ -325,6 +325,7 @@ jobs:
           Add-Type -AssemblyName System.IO.Compression.FileSystem
           $archive = [System.IO.Compression.ZipFile]::OpenRead($zip)
           try {
+            $entries = @($archive.Entries | ForEach-Object { $_.FullName })
             $actual = @($archive.Entries |
               Where-Object { $_.Name -ne "" } |
               ForEach-Object { $_.FullName } |
@@ -333,7 +334,7 @@ jobs:
             if (Compare-Object $expected $actual) {
               throw "Portable ZIP contents differ from the three-file release manifest."
             }
-            if ($actual | Where-Object { $_ -match '(^|/)(data|exports|logs)(/|$)|\.sqlite($|-)' }) {
+            if ($entries | Where-Object { $_ -match '(^|/)(data|exports|logs)(/|$)|\.sqlite($|-)' }) {
               throw "The portable ZIP contains runtime data or a database."
             }
           }
