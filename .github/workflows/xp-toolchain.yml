@@ -1,0 +1,270 @@
+name: XP-targeted Win32 build (manual)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  xp-x86:
+    name: w64devkit x86 (XP target)
+    runs-on: windows-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, Node 24
+
+      - name: Download and verify w64devkit x86
+        shell: pwsh
+        run: |
+          $archive = Join-Path $env:RUNNER_TEMP "w64devkit-x86-2.10.0.7z.exe"
+          $url = "https://github.com/skeeto/w64devkit/releases/download/v2.10.0/w64devkit-x86-2.10.0.7z.exe"
+          $expectedSha256 = "513ff7fc571cf6764a5aedbca92f43c513f8d01085c65df5133a82db13a7e63d"
+
+          Invoke-WebRequest -Uri $url -OutFile $archive
+          $actualSha256 = (Get-FileHash -Path $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actualSha256 -ne $expectedSha256) {
+            throw "w64devkit archive SHA-256 mismatch."
+          }
+
+          $sevenZip = (Get-Command "7z.exe" -ErrorAction SilentlyContinue).Source
+          if (-not $sevenZip) {
+            $sevenZip = Join-Path $env:ProgramFiles "7-Zip\7z.exe"
+          }
+          if (-not (Test-Path $sevenZip)) {
+            throw "7-Zip was not found on the GitHub Windows runner."
+          }
+
+          $destination = Join-Path $env:RUNNER_TEMP "w64devkit-x86"
+          New-Item -ItemType Directory -Force -Path $destination | Out-Null
+          & $sevenZip x $archive "-o$destination" -y | Out-Host
+          if ($LASTEXITCODE -ne 0) {
+            throw "Could not extract the w64devkit archive."
+          }
+
+          $toolRoot = Join-Path $destination "w64devkit"
+          $bin = Join-Path $toolRoot "bin"
+          if (-not (Test-Path (Join-Path $bin "gcc.exe"))) {
+            throw "The extracted w64devkit x86 compiler was not found."
+          }
+
+          $env:PATH = "$bin;$env:PATH"
+          "$bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          "W64DEVKIT_BIN=$bin" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+          $target = (& (Join-Path $bin "gcc.exe") -dumpmachine).Trim()
+          if ($target -ne "i686-w64-mingw32") {
+            throw "Expected i686-w64-mingw32, got: $target"
+          }
+
+          & (Join-Path $bin "gcc.exe") --version
+          & (Join-Path $bin "g++.exe") --version
+
+      - name: Configure XP-targeted build
+        run: cmake --preset xp-x86-w64devkit
+
+      - name: Build application and tests
+        run: cmake --build --preset xp-x86-w64devkit --parallel
+
+      - name: Run SQLite store tests
+        run: ctest --preset xp-x86-w64devkit
+
+      - name: Inspect executable target and imports
+        shell: pwsh
+        run: |
+          $exe = Join-Path $env:GITHUB_WORKSPACE "build\xp-x86-w64devkit\BiblioLED.exe"
+          $machine = (& objdump -f $exe | Out-String)
+          if ($machine -notmatch "pei-i386") {
+            throw "The application is not a 32-bit i386 PE executable."
+          }
+
+          $headers = (& objdump -p $exe | Out-String)
+          if ($headers -notmatch "MajorSubsystemVersion\s+5" -or
+              $headers -notmatch "MinorSubsystemVersion\s+1") {
+            throw "The PE subsystem version is not Windows XP (5.01)."
+          }
+
+          $dlls = [regex]::Matches($headers, "(?m)^\s*DLL Name:\s*(.+?)\s*$") |
+            ForEach-Object { $_.Groups[1].Value } |
+            Sort-Object -Unique
+
+          if ($dlls | Where-Object { $_ -match "^(api-ms-win-|ext-ms-win-)" }) {
+            throw "The executable imports an API-set DLL that is not provided by Windows XP."
+          }
+
+          $xpUnavailableApis = @(
+            "AcquireSRWLockExclusive", "AcquireSRWLockShared",
+            "InitializeSRWLock", "ReleaseSRWLockExclusive", "ReleaseSRWLockShared",
+            "SleepConditionVariableCS", "WakeConditionVariable",
+            "InitOnceExecuteOnce", "GetTickCount64",
+            "GetSystemTimePreciseAsFileTime", "CreateFile2",
+            "GetFileInformationByHandleEx", "GetFinalPathNameByHandleW",
+            "CancelIoEx", "GetQueuedCompletionStatusEx", "SetThreadDescription"
+          )
+          $foundUnavailableApis = @(
+            foreach ($api in $xpUnavailableApis) {
+              if ($headers -match ("(?m)\s" + [regex]::Escape($api) + "\s*$")) { $api }
+            }
+          )
+          if ($foundUnavailableApis.Count -gt 0) {
+            throw "Found APIs unavailable on Windows XP: $($foundUnavailableApis -join ', ')"
+          }
+
+          $report = @(
+            "Executable: BiblioLED.exe",
+            "Machine: i386 (32-bit)",
+            "Subsystem: Windows GUI 5.01 (Windows XP)",
+            "Imported system DLLs: $($dlls -join ', ')",
+            "Known post-XP API blacklist: no matches"
+          )
+          $report | Set-Content -Path (Join-Path $env:RUNNER_TEMP "pe-inspection.txt") -Encoding utf8
+
+      - name: Package disposable XP test build
+        shell: pwsh
+        run: |
+          $package = Join-Path $env:RUNNER_TEMP "BiblioLED-XP-PoC"
+          New-Item -ItemType Directory -Force -Path (Join-Path $package "config") | Out-Null
+
+          Copy-Item "build\xp-x86-w64devkit\BiblioLED.exe" (Join-Path $package "BiblioLED.exe")
+          Copy-Item "config\settings.ini" (Join-Path $package "config\settings.ini")
+          Copy-Item (Join-Path $env:RUNNER_TEMP "pe-inspection.txt") (Join-Path $package "pe-inspection.txt")
+
+          @'
+          BiblioLED — prova de conceito para Windows XP SP3 (32 bits)
+
+          Esta compilação serve apenas para ensaio.
+          Não é uma versão de utilização diária nem está preparada para dados reais.
+
+          Protecções e persistência incluídas:
+          - Ícone embebido no executável; não é necessário um ficheiro .ico separado.
+          - Colunas reorganizáveis por arrastamento; ordem e larguras em config\settings.ini.
+          - Novas bases de dados criadas no esquema SQLite versão 1.
+          - Bases antigas (versão 0) só são alteradas depois de confirmação explícita.
+            Antes da migração é criada e validada uma cópia de segurança.
+          - Criação, edição e eliminação de empréstimos com auditoria SQLite transaccional.
+          - Auditoria de arranque, encerramento, cópias manuais e reposições.
+          - Uma cópia automática comprimida antes da primeira alteração de empréstimos
+            de cada dia local. A mesma cópia válida é reutilizada nesse dia.
+          - Eventos de auditoria e alterações às definições não desencadeiam cópias automáticas.
+          - Retenção automática: 7 cópias diárias, 4 semanais e 12 mensais.
+            Só as cópias automáticas são limpas; cópias manuais e cópias de segurança
+            anteriores a reposições/migrações ficam preservadas.
+          - Compressão através da biblioteca zlib 1.4, ligada estaticamente:
+            gzip (.sqlite.gz) ou zlib (.sqlite.zlib), com nível configurável de 0 a 9.
+          - As cópias antigas sem compressão (.sqlite) continuam a poder ser repostas.
+          - A reposição valida a cópia seleccionada e cria primeiro uma cópia de
+            segurança da base de dados actual.
+          - Um marcador impede a criação silenciosa de uma base vazia se a base de
+            dados esperada desaparecer depois da inicialização.
+          - Os caminhos Windows usados pela base de dados, pelas cópias e pelo ficheiro
+            config\settings.ini suportam nomes de pastas com caracteres Unicode.
+          - As pastas config, data, data\\backups, exports e logs são verificadas no
+            arranque; se um caminho existir como ficheiro em vez de pasta, a aplicação
+            pára antes de abrir a base de dados.
+          - A aplicação não arranca se não conseguir garantir a instância única para
+            esta pasta. Um problema técnico na janela de selecção de cópias é reportado;
+            cancelar a janela continua a ser uma operação normal.
+          - As tentativas de alterar ou eliminar IDs inexistentes não criam cópias
+            automáticas, pois não podem modificar a base de dados.
+
+          Definições de cópias:
+          - Opções > Definições de cópias permite escolher gzip/zlib e nível 0–9.
+          - Os valores ficam em config\settings.ini, secção [backups].
+          - As alterações são aplicadas imediatamente às próximas cópias criadas,
+            sem reiniciar a aplicação. Uma cópia automática válida já criada hoje
+            continua a ser reutilizada.
+          - O nível 6 é o valor predefinido.
+
+          O log externo fica em logs\audit.log e roda para ficheiros datados quando
+          ultrapassa o limite configurado (5 MB por defeito). Uma linha final incompleta
+          é recuperada a partir da auditoria SQLite. Eventos já escritos não são repetidos.
+          Quando enabled=0 em config\settings.ini, a auditoria SQLite continua activa e
+          a sincronização do ficheiro fica pendente até voltar a ser activada.
+          Se o log estiver activado mas não puder ser escrito, as alterações à base de
+          dados ficam bloqueadas até a sincronização recuperar. Depois de corrigir
+          o problema, escolha Ficheiro > Tentar sincronizar registo de auditoria,
+          sem reiniciar a aplicação.
+
+          A recuperação guiada de bases de dados em falta/corrompidas está implementada: a aplicação valida uma cópia seleccionada, preserva a base anterior e os ficheiros auxiliares SQLite antes de instalar a cópia validada. As cópias automáticas inválidas e respectivos auxiliares também são preservados em conjunto fora da área de retenção. Continuam a faltar futuras migrações de esquema e outras funcionalidades da aplicação final. O registo interno de auditoria
+          não tem visualizador.
+
+          Ensaio sugerido (apenas numa pasta temporária):
+          1. Extraia este artefacto para uma pasta nova e vazia.
+          2. Execute BiblioLED.exe e crie um registo fictício.
+          3. Confirme que surge uma cópia automática .sqlite.gz antes da primeira
+             alteração de empréstimos desse dia. Não deve surgir apenas por abrir ou
+             fechar a aplicação.
+          4. Crie/edite/elimine registos fictícios adicionais no mesmo dia; confirme
+             que a cópia automática diária é reutilizada.
+          5. Use Ficheiro > Criar cópia de segurança e confirme que o nome começa
+             por BiblioLED_manual_ e tem a extensão de compressão configurada.
+          6. Em Opções > Definições de cópias, experimente zlib e outro nível.
+             Sem reiniciar, use Ficheiro > Criar cópia de segurança novamente
+             e confirme que a nova cópia usa a extensão .sqlite.zlib.
+          7. Reponha uma cópia comprimida. Confirme que é criada uma cópia de
+             segurança BiblioLED_safety_restore_ da base de dados anterior.
+          8. Na janela principal, clique em Título/Tipo para ordenar alfabeticamente
+             e em Empréstimo/Expira em/Dias para ordenar cronologicamente ou
+             numericamente. Volte a clicar no mesmo cabeçalho e confirme a ordem inversa.
+             Arraste os cabeçalhos das colunas, feche e volte a abrir; confirme que
+             a ordem e as larguras são mantidas.
+          9. Abra logs\audit.log e confirme que as operações aparecem no log.
+          10. Opcional: teste a recuperação apenas nesta pasta descartável.
+              a) Para simular uma base em falta, feche a aplicação, renomeie
+                 data\biblioteca.sqlite para biblioteca.sqlite.missing-test e volte
+                 a iniciar. Escolha uma cópia válida em data\backups e confirme a
+                 recuperação. A aplicação deverá reabrir a base recuperada.
+              b) Para simular corrupção, feche a aplicação, copie a base para
+                 biblioteca.sqlite.before-corrupt-test e substitua o ficheiro
+                 data\biblioteca.sqlite por texto simples. Ao iniciar, escolha uma
+                 cópia válida. Confirme que a aplicação recupera e preserva o ficheiro
+                 danificado com o sufixo .recovery_preserved_...
+              Não execute estes ensaios na pasta com dados reais.
+          11. Abra Ver > Histórico (Ctrl+H). Confirme que aparecem registos
+              expirados e futuros. Clique em ID, Título, Tipo e Data e hora para
+              verificar ordenação numérica, alfabética e cronológica; volte a clicar
+              para inverter a ordem. Pesquise por título, data e ID, filtre por
+              Livro/Audiolivro, edite um registo fictício e elimine outro.
+              Confirme que o histórico e a janela principal são actualizados.
+          12. Em Opções > Definições gerais, altere os limites ou a duração.
+              Confirme que a sessão actual não muda. Feche e reabra a aplicação;
+              os novos valores deverão então ser aplicados. Teste apenas nesta
+              pasta descartável.
+          13. Abra Ajuda > Sobre e confirme o ícone, a versão e a data de compilação.
+          14. Abra Ver > Estatísticas. Escolha anos diferentes e confirme os totais
+              anuais e a comparação com o ano anterior. Verifique a actividade
+              diária, a distribuição por dia da semana/hora e a média/mediana
+              global dos intervalos entre dias com empréstimos.
+          15. Use Ficheiro > Exportar histórico para CSV. Confirme BOM UTF-8,
+              separador ;, colunas Title/LoanDate/Type, registos futuros/expirados
+              e a preservação de ;, aspas e quebras de linha.
+          16. Opcional: extraia o artefacto para uma pasta cujo nome tenha acentos,
+              por exemplo C:\Temp\BiblioLED_ação. Execute a aplicação e altere uma
+              definição geral em Opções > Definições gerais. Feche e reabra a
+              aplicação; confirme que o novo valor ficou guardado no INI. Depois
+              crie um registo fictício e confirme que a cópia automática comprimida
+              surge em data\backups. Este ensaio cobre caminhos Unicode do
+              executável, do INI, da base de dados e das cópias de segurança.
+              Use apenas a pasta descartável.
+          17. Opcional: numa segunda pasta descartável, feche a aplicação, mude
+              temporariamente a pasta logs para logs.old e crie um ficheiro normal
+              chamado logs no seu lugar. Volte a iniciar. A aplicação deverá indicar
+              o caminho em conflito e terminar sem abrir/criar a base de dados.
+              Feche, apague o ficheiro logs e restaure o nome logs.old para logs.
+
+          Não copie aqui a base de dados real nem substitua a instalação actual.
+          '@ | Set-Content -Path (Join-Path $package "LEIA-ME-TESTE.txt") -Encoding utf8BOM
+
+          $readmePath = Join-Path $package "LEIA-ME-TESTE.txt"
+          $readmeBytes = [System.IO.File]::ReadAllBytes($readmePath)
+          if ($readmeBytes.Length -lt 3 -or
+              $readmeBytes[0] -ne 0xEF -or
+              $readmeBytes[1] -ne 0xBB -or
+              $readmeBytes[2] -ne 0xBF) {
+            throw "The Portuguese test guide must be UTF-8 with BOM for Windows XP Notepad."
+          }
+
+      - name: Upload disposable XP test build
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2, Node 24
+        with:
+          name: BiblioLED-XP-PoC
+          path: ${{ runner.temp }}/BiblioLED-XP-PoC/
+          if-no-files-found: error
+          retention-days: 30

@@ -1,0 +1,21 @@
+# CMake build output
+/build/
+/cmake-build-*/
+/out/
+
+# IDE/editor files
+.vs/
+.vscode/
+.idea/
+
+# Runtime data (never commit the user's local data)
+data/
+logs/
+exports/
+
+# Local database files
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+*.db
