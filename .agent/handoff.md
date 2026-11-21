@@ -1,4 +1,6 @@
-# Session handoff — 2026-11-16
+# Session handoff — 2026-11-16 (historical upstream snapshot)
+
+The original handoff below describes `quilterrantdean/BiblioLED` and its `development` branch. It is retained as history, not as current branch guidance. The current repository is `quilterrantdean/project1`; follow the active Arena session branch and the 2026-11-21 continuation update at the end of this file.
 
 ## Repository and branch
 
@@ -67,18 +69,20 @@ No real user database, settings file or personal records have been opened, copie
 ## Key project rules
 
 - Read `AGENTS.md`, then `.agent/README.md`, `.agent/plan.md`, `.agent/decisions.md`, `.agent/architecture.md` and `.agent/codebase-review.md` before substantive changes.
-- Work only on `development`; never write directly to `main` or `master`.
+- In Arena, work only on the branch named by the active session; never switch/create another branch or write directly to `main` or `master`.
 - Keep repository text/commit messages in English; the application UI remains European Portuguese with pre-1990 spelling.
 - No real user data in tests. Do not add automatic CI triggers for documentation-only commits or automatic XP builds.
 
 ## Arena continuation update — 2026-11-21
 
-BiblioLED was imported into `quilterrantdean/project1` and PR #1 was merged to `main`. Continue only on the active Arena branch; do not assume the upstream `development` branch name applies to this repository/session.
+BiblioLED is now in `quilterrantdean/project1`; PRs #1 and #2 were merged to `main`. Continue only on the active Arena branch. Historical upstream instructions about the `development` branch do not override the active session branch.
 
-The 1.0-target XP workflow passed from `arena/402f73ec-project1` at commit `ea2a7b5a9ded70390238335b92343f0ca3e9fd3b`: [run 44935522857](https://github.com/quilterrantdean/project1/actions/runs/44935522857). Build, 9/9 tests (including year-2099 date conversion and storage), PE32/i386, Windows GUI subsystem 5.01, import checks, and artefact upload all passed. The `BiblioLED-XP-PoC` artefact is 1,565,153 bytes. Core run [44935525364](https://github.com/quilterrantdean/project1/actions/runs/44935525364) also passed Ubuntu tests, modern Win32 compile/store tests, and Cppcheck.
+The user reports that target-machine testing passed. They have not yet identified the exact tested artifact/hash or provided the scenario matrix. The current work has produced a separate versioned 1.0.0 candidate ZIP; run this exact ZIP from a fresh folder on XP before an official release.
 
-In the current Linux workspace, direct C++11 builds/tests for application paths, settings storage, CSV export, loan rules, and loan statistics all pass. The full SQLite store and zlib backup tests cannot run locally because this workspace lacks their development headers/libraries and the Debian package mirrors are unreachable; keep those and XP validation in GitHub Actions.
+Current candidate XP run [44938467176](https://github.com/quilterrantdean/project1/actions/runs/44938467176) and Core run [44938469974](https://github.com/quilterrantdean/project1/actions/runs/44938469974) passed on commit `c1b5a0b3fdc21280c2ac83fb57ab7a30a350718f`. XP: 9/9 tests, PE32/i386, subsystem 5.01, import/API checks and package manifest validation. The artifact [`BiblioLED-1.0.0-XP-x86-candidate`](https://github.com/quilterrantdean/project1/actions/runs/44938467176/artifacts/14721051380) is 1,570,181 bytes; its ZIP contains exactly the EXE, default INI and user guide. The workflow package also includes SHA and build metadata outside the ZIP.
 
-Root cause of the original year-2099 rejection: the XP-targeted runtime has 32-bit `std::time_t`; `std::mktime` returned -1 outside its representable range. This was a C runtime conversion limit, not an OS or SQLite storage limit. Loan date calculations now use 64-bit `LoanTimestamp` and Windows `_mktime64` / `_localtime64`. The test fixtures for year 2099 are restored and pass on XP.
+Current Linux workspace direct C++11 tests for application paths, settings, CSV, loan rules and statistics passed. Full SQLite-store and zlib backup tests require missing development libraries; the Debian mirrors were unreachable. Those tests and the XP build remain covered by CI.
 
-Immediate next step: run the uploaded artefact on Windows XP SP3 in a fresh disposable folder. Record the artifact hash, machine/OS details, and exact scenarios; exercise recovery, backups, and restore before release planning. The application remains a proof of concept until this target-system validation is complete.
+The original 2099 issue was traced to 32-bit `std::time_t` and `std::mktime` in the XP-targeted runtime. Loan calculations now use 64-bit `LoanTimestamp` and `_mktime64` / `_localtime64`; year-2099 fixtures pass on XP CI.
+
+Release gates still requiring evidence: target hardware/OS and scenario record plus the exact tested ZIP hash; run the versioned ZIP in a fresh folder; measure performance on the XP machine; continue physical-power-loss testing separately from abrupt-process recovery. Do not use actual user data in automated tests. Do not publish a GitHub Release until the exact artifact has been recorded and the user approves.

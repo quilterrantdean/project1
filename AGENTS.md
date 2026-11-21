@@ -16,12 +16,13 @@ Update the relevant notes when a material decision, implementation detail, or pr
 
 ## Branch and repository safety
 
-- The only branch for assistant development work is `development`.
-- Never commit directly to `main` or `master`.
+- In Arena sessions, use only the branch named by the current session context. Do not switch, create, rename, or push another branch.
+- Never commit directly to `main` or `master`; use a pull request.
 - Never move, force-update, or otherwise modify the `main` or `master` refs.
-- Do not manually merge a pull request into `main` or `master` unless the user explicitly requests it in that specific task.
-- Pull Requests and GitHub Auto-merge are permitted after the configured checks pass. Do not bypass required checks.
-- Before every write operation, confirm that the target branch is `development`.
+- Merge a pull request only when the user explicitly requests the merge in that task.
+- Pull requests are permitted after configured checks pass. Do not bypass required checks.
+- Before every write operation, confirm the current branch matches the active Arena session branch.
+- Some imported BiblioLED notes describe the upstream repository's `development` workflow. Treat those as historical/upstream-specific; they do not override the active Arena branch or repository instructions.
 - Do not modify application code, user data, configuration, or database files unless the user has requested that work.
 
 ## Data safety
