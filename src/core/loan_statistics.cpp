@@ -84,18 +84,17 @@ bool CalculateLoanStatistics(const std::vector<LoanRecord>& records,
         else if (type == "audiolivro") ++result.audiobook_count;
         else ++result.other_type_count;
 
-        const std::time_t timestamp = ParseLoanDateTime(records[i].loan_date);
-        if (timestamp == static_cast<std::time_t>(-1)) {
+        const LoanTimestamp timestamp = ParseLoanDateTime(records[i].loan_date);
+        if (timestamp == static_cast<LoanTimestamp>(-1)) {
             ++result.invalid_date_records;
             continue;
         }
 
-        const std::tm* local_pointer = std::localtime(&timestamp);
-        if (!local_pointer) {
+        std::tm local = {};
+        if (!GetLocalDateTimeParts(timestamp, &local)) {
             ++result.invalid_date_records;
             continue;
         }
-        const std::tm local = *local_pointer;
         const int year = local.tm_year + 1900;
         const std::string date =
             FormatLocalDateTime(timestamp, "%Y-%m-%d");
@@ -165,11 +164,10 @@ bool CalculateLoanStatistics(const std::vector<LoanRecord>& records,
     // Re-parse the valid dates only for the selected year's weekday/hour
     // distribution. This keeps the statistics independent of the GUI.
     for (size_t i = 0; i < records.size(); ++i) {
-        const std::time_t timestamp = ParseLoanDateTime(records[i].loan_date);
-        if (timestamp == static_cast<std::time_t>(-1)) continue;
-        const std::tm* local_pointer = std::localtime(&timestamp);
-        if (!local_pointer) continue;
-        const std::tm local = *local_pointer;
+        const LoanTimestamp timestamp = ParseLoanDateTime(records[i].loan_date);
+        if (timestamp == static_cast<LoanTimestamp>(-1)) continue;
+        std::tm local = {};
+        if (!GetLocalDateTimeParts(timestamp, &local)) continue;
         if (local.tm_year + 1900 != selected_year) continue;
 
         const int monday_first_weekday = (local.tm_wday + 6) % 7;

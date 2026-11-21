@@ -7,6 +7,34 @@ namespace biblioled {
 
 namespace {
 
+bool ConvertToLocalParts(LoanTimestamp value, std::tm* parts)
+{
+    if (!parts) return false;
+#ifdef _WIN32
+    __time64_t timestamp = static_cast<__time64_t>(value);
+    const std::tm* local = _localtime64(&timestamp);
+    if (!local) return false;
+    *parts = *local;
+    return true;
+#else
+    const std::time_t timestamp = static_cast<std::time_t>(value);
+    if (static_cast<LoanTimestamp>(timestamp) != value) return false;
+    const std::tm* local = std::localtime(&timestamp);
+    if (!local) return false;
+    *parts = *local;
+    return true;
+#endif
+}
+
+LoanTimestamp ConvertFromLocalParts(std::tm* parts)
+{
+#ifdef _WIN32
+    return static_cast<LoanTimestamp>(_mktime64(parts));
+#else
+    return static_cast<LoanTimestamp>(std::mktime(parts));
+#endif
+}
+
 long long DaysFromCivil(const std::tm& value)
 {
     long long year = static_cast<long long>(value.tm_year) + 1900;
@@ -28,19 +56,17 @@ long long DaysFromCivil(const std::tm& value)
     return era * 146097 + static_cast<long long>(day_of_era) - 719468;
 }
 
-bool CalculateLocalDaysRemaining(std::time_t expiry,
-                                 std::time_t now,
+bool CalculateLocalDaysRemaining(LoanTimestamp expiry,
+                                 LoanTimestamp now,
                                  long* days_remaining)
 {
     if (!days_remaining) return false;
 
-    const std::tm* expiry_value = std::localtime(&expiry);
-    if (!expiry_value) return false;
-    const std::tm expiry_parts = *expiry_value;
+    std::tm expiry_parts = {};
+    if (!GetLocalDateTimeParts(expiry, &expiry_parts)) return false;
 
-    const std::tm* now_value = std::localtime(&now);
-    if (!now_value) return false;
-    const std::tm now_parts = *now_value;
+    std::tm now_parts = {};
+    if (!GetLocalDateTimeParts(now, &now_parts)) return false;
 
     const long long expiry_seconds =
         expiry_parts.tm_hour * 3600LL +
@@ -65,14 +91,14 @@ bool CalculateLocalDaysRemaining(std::time_t expiry,
 
 } // namespace
 
-std::time_t ParseLoanDateTime(const std::string& value)
+LoanTimestamp ParseLoanDateTime(const std::string& value)
 {
     // Persisted loan dates use one fixed, locale-independent representation:
     // YYYY-MM-DD HH:MM. Do not let scanf accept signs, whitespace, or
     // variable-width fields that would create non-canonical stored values.
     if (value.size() != 16 || value[4] != '-' || value[7] != '-' ||
         value[10] != ' ' || value[13] != ':') {
-        return static_cast<std::time_t>(-1);
+        return static_cast<LoanTimestamp>(-1);
     }
 
     int digits[12] = {0};
@@ -80,7 +106,7 @@ std::time_t ParseLoanDateTime(const std::string& value)
     for (std::string::size_type i = 0; i < value.size(); ++i) {
         if (i == 4 || i == 7 || i == 10 || i == 13) continue;
         if (value[i] < '0' || value[i] > '9') {
-            return static_cast<std::time_t>(-1);
+            return static_cast<LoanTimestamp>(-1);
         }
         digits[digit_index++] = value[i] - '0';
     }
@@ -94,7 +120,7 @@ std::time_t ParseLoanDateTime(const std::string& value)
 
     if (year < 1900 || month < 1 || month > 12 || day < 1 || day > 31 ||
         hour > 23 || minute > 59) {
-        return static_cast<std::time_t>(-1);
+        return static_cast<LoanTimestamp>(-1);
     }
 
     std::tm parts = {};
@@ -105,59 +131,65 @@ std::time_t ParseLoanDateTime(const std::string& value)
     parts.tm_min = minute;
     parts.tm_isdst = -1;
 
-    const std::time_t result = std::mktime(&parts);
-    if (result == static_cast<std::time_t>(-1)) return result;
+    const LoanTimestamp result = ConvertFromLocalParts(&parts);
+    if (result == static_cast<LoanTimestamp>(-1)) return result;
 
-    const std::tm* checked = std::localtime(&result);
-    if (!checked ||
-        checked->tm_year != year - 1900 ||
-        checked->tm_mon != month - 1 ||
-        checked->tm_mday != day ||
-        checked->tm_hour != hour ||
-        checked->tm_min != minute) {
-        return static_cast<std::time_t>(-1);
+    std::tm checked = {};
+    if (!ConvertToLocalParts(result, &checked) ||
+        checked.tm_year != year - 1900 ||
+        checked.tm_mon != month - 1 ||
+        checked.tm_mday != day ||
+        checked.tm_hour != hour ||
+        checked.tm_min != minute) {
+        return static_cast<LoanTimestamp>(-1);
     }
 
     return result;
 }
 
-std::string FormatLocalDateTime(std::time_t value, const char* format)
+bool GetLocalDateTimeParts(LoanTimestamp value, std::tm* parts)
+{
+    return ConvertToLocalParts(value, parts);
+}
+
+std::string FormatLocalDateTime(LoanTimestamp value, const char* format)
 {
     if (!format) return std::string();
 
-    const std::tm* local = std::localtime(&value);
-    if (!local) return std::string();
+    std::tm local = {};
+    if (!ConvertToLocalParts(value, &local)) return std::string();
 
     char buffer[64] = {0};
-    if (std::strftime(buffer, sizeof(buffer), format, local) == 0) {
+    if (std::strftime(buffer, sizeof(buffer), format, &local) == 0) {
         return std::string();
     }
     return buffer;
 }
 
-std::time_t AddLocalCalendarDays(std::time_t value, int days)
+LoanTimestamp AddLocalCalendarDays(LoanTimestamp value, int days)
 {
-    const std::tm* current = std::localtime(&value);
-    if (!current) return static_cast<std::time_t>(-1);
+    std::tm adjusted = {};
+    if (!ConvertToLocalParts(value, &adjusted)) {
+        return static_cast<LoanTimestamp>(-1);
+    }
 
-    std::tm adjusted = *current;
     adjusted.tm_mday += days;
     adjusted.tm_isdst = -1;
-    return std::mktime(&adjusted);
+    return ConvertFromLocalParts(&adjusted);
 }
 
 bool EvaluateLoanDateTime(const std::string& loan_date,
                           int duration_days,
-                          std::time_t now,
+                          LoanTimestamp now,
                           LoanEvaluation* evaluation)
 {
     if (!evaluation || duration_days <= 0) return false;
 
-    const std::time_t loan_time = ParseLoanDateTime(loan_date);
-    if (loan_time == static_cast<std::time_t>(-1)) return false;
+    const LoanTimestamp loan_time = ParseLoanDateTime(loan_date);
+    if (loan_time == static_cast<LoanTimestamp>(-1)) return false;
 
-    const std::time_t expiry_time = AddLocalCalendarDays(loan_time, duration_days);
-    if (expiry_time == static_cast<std::time_t>(-1)) return false;
+    const LoanTimestamp expiry_time = AddLocalCalendarDays(loan_time, duration_days);
+    if (expiry_time == static_cast<LoanTimestamp>(-1)) return false;
 
     LoanEvaluation result;
     result.loan_time = loan_time;
@@ -173,7 +205,7 @@ bool EvaluateLoanDateTime(const std::string& loan_date,
     return true;
 }
 
-bool BuildQuotaWindowBounds(std::time_t now,
+bool BuildQuotaWindowBounds(LoanTimestamp now,
                             int monthly_window_days,
                             QuotaWindowBounds* bounds)
 {
@@ -182,9 +214,9 @@ bool BuildQuotaWindowBounds(std::time_t now,
     const std::string date = FormatLocalDateTime(now, "%Y-%m-%d");
     if (date.empty()) return false;
 
-    const std::time_t monthly_start =
+    const LoanTimestamp monthly_start =
         AddLocalCalendarDays(now, -monthly_window_days);
-    if (monthly_start == static_cast<std::time_t>(-1)) return false;
+    if (monthly_start == static_cast<LoanTimestamp>(-1)) return false;
 
     const std::string monthly =
         FormatLocalDateTime(monthly_start, "%Y-%m-%d %H:%M");

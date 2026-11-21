@@ -147,6 +147,9 @@ bool TestUnicodeDatabasePath()
                  records.size() == 1 &&
                  records[0].title == "Registo num caminho Unicode";
     second.Close();
+    if (!ok && !error.empty()) {
+        std::cerr << "Unicode database path test: " << error << std::endl;
+    }
 
     WIN32_FIND_DATAW data;
     const std::wstring pattern = backup_directory + L"\\*";

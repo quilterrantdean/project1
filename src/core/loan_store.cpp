@@ -1977,7 +1977,7 @@ bool LoanStore::Insert(LoanRecord* record, std::string* error)
         SetError(error, "A valid database, title, date and type are required.");
         return false;
     }
-    if (ParseLoanDateTime(record->loan_date) == static_cast<std::time_t>(-1)) {
+    if (ParseLoanDateTime(record->loan_date) == static_cast<LoanTimestamp>(-1)) {
         SetError(error, "The loan date must use the valid YYYY-MM-DD HH:MM format.");
         return false;
     }
@@ -2046,7 +2046,7 @@ bool LoanStore::Update(const LoanRecord& record, std::string* error)
         SetError(error, "A valid record is required for update.");
         return false;
     }
-    if (ParseLoanDateTime(record.loan_date) == static_cast<std::time_t>(-1)) {
+    if (ParseLoanDateTime(record.loan_date) == static_cast<LoanTimestamp>(-1)) {
         SetError(error, "The loan date must use the valid YYYY-MM-DD HH:MM format.");
         return false;
     }

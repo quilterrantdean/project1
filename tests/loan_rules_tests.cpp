@@ -23,64 +23,71 @@ void Check(bool condition, const char* message)
     }
 }
 
-std::time_t Parse(const char* value)
+biblioled::LoanTimestamp Parse(const char* value)
 {
     return biblioled::ParseLoanDateTime(value);
 }
 
 void TestDateParsing()
 {
-    Check(Parse("2024-02-29 12:34") != static_cast<std::time_t>(-1),
+    Check(Parse("2024-02-29 12:34") != static_cast<biblioled::LoanTimestamp>(-1),
           "a valid leap-day date should parse");
-    Check(Parse("2023-02-29 12:34") == static_cast<std::time_t>(-1),
+
+    const biblioled::LoanTimestamp far_future = Parse("2099-03-01 10:00");
+    Check(far_future != static_cast<biblioled::LoanTimestamp>(-1),
+          "valid four-digit future years must parse beyond the XP 2038 time_t limit");
+    Check(biblioled::FormatLocalDateTime(far_future, "%Y-%m-%d %H:%M") ==
+              "2099-03-01 10:00",
+          "64-bit local date conversion should round-trip year 2099");
+    Check(Parse("2023-02-29 12:34") == static_cast<biblioled::LoanTimestamp>(-1),
           "an invalid leap-day date should be rejected");
-    Check(Parse("2024-13-01 12:34") == static_cast<std::time_t>(-1),
+    Check(Parse("2024-13-01 12:34") == static_cast<biblioled::LoanTimestamp>(-1),
           "an out-of-range month should be rejected");
-    Check(Parse("2024-01-01 24:00") == static_cast<std::time_t>(-1),
+    Check(Parse("2024-01-01 24:00") == static_cast<biblioled::LoanTimestamp>(-1),
           "an out-of-range hour should be rejected");
-    Check(Parse("2024-01-01 12:60") == static_cast<std::time_t>(-1),
+    Check(Parse("2024-01-01 12:60") == static_cast<biblioled::LoanTimestamp>(-1),
           "an out-of-range minute should be rejected");
-    Check(Parse("2024-01-01 12:00 trailing") == static_cast<std::time_t>(-1),
+    Check(Parse("2024-01-01 12:00 trailing") == static_cast<biblioled::LoanTimestamp>(-1),
           "trailing text should be rejected");
-    Check(Parse("1899-12-31 23:59") == static_cast<std::time_t>(-1),
+    Check(Parse("1899-12-31 23:59") == static_cast<biblioled::LoanTimestamp>(-1),
           "years before 1900 should be rejected");
-    Check(Parse("2024-2-29 12:34") == static_cast<std::time_t>(-1),
+    Check(Parse("2024-2-29 12:34") == static_cast<biblioled::LoanTimestamp>(-1),
           "single-digit month should be rejected");
-    Check(Parse("2024-02-9 12:34") == static_cast<std::time_t>(-1),
+    Check(Parse("2024-02-9 12:34") == static_cast<biblioled::LoanTimestamp>(-1),
           "single-digit day should be rejected");
-    Check(Parse("2024-02-29 2:34") == static_cast<std::time_t>(-1),
+    Check(Parse("2024-02-29 2:34") == static_cast<biblioled::LoanTimestamp>(-1),
           "single-digit hour should be rejected");
-    Check(Parse("2024-02-29 12:4") == static_cast<std::time_t>(-1),
+    Check(Parse("2024-02-29 12:4") == static_cast<biblioled::LoanTimestamp>(-1),
           "single-digit minute should be rejected");
-    Check(Parse("+2024-02-29 12:34") == static_cast<std::time_t>(-1),
+    Check(Parse("+2024-02-29 12:34") == static_cast<biblioled::LoanTimestamp>(-1),
           "signed year should be rejected");
-    Check(Parse("2024-+2-29 12:34") == static_cast<std::time_t>(-1),
+    Check(Parse("2024-+2-29 12:34") == static_cast<biblioled::LoanTimestamp>(-1),
           "signed month should be rejected");
-    Check(Parse(" 2024-02-29 12:34") == static_cast<std::time_t>(-1),
+    Check(Parse(" 2024-02-29 12:34") == static_cast<biblioled::LoanTimestamp>(-1),
           "leading whitespace should be rejected");
-    Check(Parse("2024-02-29 12:34 ") == static_cast<std::time_t>(-1),
+    Check(Parse("2024-02-29 12:34 ") == static_cast<biblioled::LoanTimestamp>(-1),
           "trailing whitespace should be rejected");
-    Check(Parse("2024-02-29T12:34") == static_cast<std::time_t>(-1),
+    Check(Parse("2024-02-29T12:34") == static_cast<biblioled::LoanTimestamp>(-1),
           "non-canonical date/time separator should be rejected");
-    Check(Parse("2024/02/29 12:34") == static_cast<std::time_t>(-1),
+    Check(Parse("2024/02/29 12:34") == static_cast<biblioled::LoanTimestamp>(-1),
           "non-canonical date separators should be rejected");
 }
 
 void TestCalendarArithmetic()
 {
-    const std::time_t january_end = Parse("2024-01-31 15:30");
-    Check(january_end != static_cast<std::time_t>(-1),
+    const biblioled::LoanTimestamp january_end = Parse("2024-01-31 15:30");
+    Check(january_end != static_cast<biblioled::LoanTimestamp>(-1),
           "January test date should parse");
-    const std::time_t february_start =
+    const biblioled::LoanTimestamp february_start =
         biblioled::AddLocalCalendarDays(january_end, 1);
-    Check(february_start != static_cast<std::time_t>(-1),
+    Check(february_start != static_cast<biblioled::LoanTimestamp>(-1),
           "adding one calendar day should succeed");
     Check(biblioled::FormatLocalDateTime(
               february_start, "%Y-%m-%d %H:%M") == "2024-02-01 15:30",
           "calendar-day arithmetic should cross month boundaries and preserve local time");
 
-    const std::time_t leap_day = Parse("2024-02-28 09:15");
-    const std::time_t next_day =
+    const biblioled::LoanTimestamp leap_day = Parse("2024-02-28 09:15");
+    const biblioled::LoanTimestamp next_day =
         biblioled::AddLocalCalendarDays(leap_day, 1);
     Check(biblioled::FormatLocalDateTime(
               next_day, "%Y-%m-%d %H:%M") == "2024-02-29 09:15",
@@ -89,8 +96,8 @@ void TestCalendarArithmetic()
 
 void TestLoanEvaluation()
 {
-    const std::time_t now = Parse("2024-06-01 12:00");
-    Check(now != static_cast<std::time_t>(-1), "reference time should parse");
+    const biblioled::LoanTimestamp now = Parse("2024-06-01 12:00");
+    Check(now != static_cast<biblioled::LoanTimestamp>(-1), "reference time should parse");
 
     biblioled::LoanEvaluation future;
     Check(biblioled::EvaluateLoanDateTime(
@@ -152,7 +159,7 @@ void TestCalendarDayDifference()
     tzset();
 #endif
 
-    const std::time_t before_spring_change = Parse("2024-03-10 12:00");
+    const biblioled::LoanTimestamp before_spring_change = Parse("2024-03-10 12:00");
     biblioled::LoanEvaluation daylight_saving;
     Check(biblioled::EvaluateLoanDateTime(
               "2024-03-10 12:00", 21, before_spring_change, &daylight_saving),
@@ -160,7 +167,7 @@ void TestCalendarDayDifference()
     Check(daylight_saving.days_remaining == 21,
           "days remaining should count local calendar days across the spring clock change");
 
-    const std::time_t just_after_expiry = Parse("2024-03-31 12:01");
+    const biblioled::LoanTimestamp just_after_expiry = Parse("2024-03-31 12:01");
     biblioled::LoanEvaluation expired;
     Check(biblioled::EvaluateLoanDateTime(
               "2024-03-10 12:00", 21, just_after_expiry, &expired),
@@ -181,7 +188,7 @@ void TestCalendarDayDifference()
 
 void TestQuotaWindows()
 {
-    const std::time_t now = Parse("2024-06-20 15:45");
+    const biblioled::LoanTimestamp now = Parse("2024-06-20 15:45");
     biblioled::QuotaWindowBounds bounds;
     Check(biblioled::BuildQuotaWindowBounds(now, 30, &bounds),
           "quota windows should be calculated");
