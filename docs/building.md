@@ -4,11 +4,11 @@
 
 BiblioLED is being rewritten as a native C++11 / Win32 / SQLite application. The intended Windows target is **32-bit Windows XP SP3**, including Pentium 4/SSE2 hardware.
 
-The current application is a proof of concept, not a supported release. It already implements loan CRUD, history/statistics, CSV export, settings, compressed backup/restore, retention, SQLite schema migration, guided recovery, and internal/external audit logging. The safety and CI work is substantially more complete than the GUI's target-machine validation.
+The application is at **1.0.0 release-candidate** stage. It implements loan CRUD, history/statistics, CSV export, settings, compressed backup/restore, retention, SQLite schema migration, guided recovery, and internal/external audit logging. The user clarified that XP testing is always performed against the latest build, with Windows XP as the active target through 1.0.0. They report the latest candidate test was OK. The latest XP candidate run is 44939158463 (ZIP SHA-256 `5c4ae7225d520b8262d8e74f9b6252827ae502a5fa8d0e14b1920697b149ba8e`). Hardware/OS details and a scenario-by-scenario matrix were not supplied; the test convention is to validate the newest build, not an older artifact.
 
-**Do not use the current proof of concept with the real BiblioLED database.** Automated tests create isolated synthetic databases. The downloadable XP artefact contains no database.
+The XP workflow produces a separate, three-file candidate ZIP with SHA-256/build metadata. This is not an official GitHub Release. Do not put real database contents in the package; automated tests use isolated synthetic databases.
 
-The user confirmed on 2026-11-16 that the executable runs well on Windows XP. Secondary-window Portuguese text encoding was confirmed corrected on 2026-11-15. The exact executable hash, XP build and exercised scenarios have not been recorded. The recovery wizard, backup/restore failure paths and a reproducible full target-system test record remain outstanding.
+The user previously confirmed that the application runs on XP and that secondary-window Portuguese text encoding was fixed. The remaining release record should identify the exact artefact/hash and tested recovery, backup/restore, UI and failure scenarios.
 
 ## Toolchains and dependencies
 
@@ -124,18 +124,24 @@ The Windows/XP test set comprises:
 
 ### Latest validated build
 
-Current application-source head: `e469c816f10451188ff4b3363d18c3ff5bf675f1`.
+The latest release-candidate source is commit `d13c767dacaf4bbc717f59ff248f5bd6004c7fd3`.
 
-- [Core tests run 44536364468](https://github.com/quilterrantdean/BiblioLED/actions/runs/44536364468) passed on this source head: Ubuntu core tests (8/8), modern Win32 application/store build and tests (9/9), and Cppcheck 2.19.0. This includes the canonical date parser, local-calendar day-count/DST tests, and the 800×600 main-window adjustment.
-- The latest successful [XP-targeted build run 43903363630](https://github.com/quilterrantdean/BiblioLED/actions/runs/43903363630) is from source revision `749de809ed1c291139fca701056ea1fac9169336`. Its pinned w64devkit x86 2.10.0 build, all nine XP tests, PE32/i386, GUI subsystem 5.01, and post-XP import checks passed. The current application source has not yet been rebuilt with the XP toolchain.
+- XP-targeted build/package [run 44939158463](https://github.com/quilterrantdean/project1/actions/runs/44939158463) passed: pinned w64devkit x86 2.10.0 build, all 9 tests, PE32/i386, GUI subsystem 5.01, import/API checks, and both package uploads.
+- Core run [44938469974](https://github.com/quilterrantdean/project1/actions/runs/44938469974) passed Ubuntu tests, modern Win32 build/store tests, and Cppcheck 2.19.0.
+- Candidate ZIP artifact [`BiblioLED-1.0.0-XP-x86-candidate`](https://github.com/quilterrantdean/project1/actions/runs/44939158463/artifacts/14720004028): 1,570,195 bytes. ZIP SHA-256: `5c4ae7225d520b8262d8e74f9b6252827ae502a5fa8d0e14b1920697b149ba8e`. It contains `BiblioLED.exe`, `config/settings.ini`, and `LEIA-ME.txt`; CI verifies the manifest and rejects databases, backups, exports and logs. The workflow artifact also includes `SHA256SUMS.txt` and `build-info.txt` outside the ZIP.
+- Disposable test artifact [`BiblioLED-XP-PoC`](https://github.com/quilterrantdean/project1/actions/runs/44939158463/artifacts/14720917049): 1,565,152 bytes; includes PE report and the detailed test guide.
 
-The latest successful disposable artefact is [14243881773](https://github.com/quilterrantdean/BiblioLED/actions/runs/43903363630/artifacts/14243881773), `BiblioLED-XP-PoC`:
+The user clarified that testing is always performed on the latest build in XP, the project's focus through 1.0.0. They confirmed the latest candidate test was OK. For traceability, associate that report with the latest XP run/ZIP listed above; the exact exercised scenarios and hardware details remain unspecified.
 
-- ZIP size: 1,568,595 bytes
+### Portable release-candidate packaging
 
-The archive contains exactly four files: `BiblioLED.exe`, `config/settings.ini`, `pe-inspection.txt`, and `LEIA-ME-TESTE.txt`. It does not contain a database or a separate icon file; the application icon is embedded in the executable. The Portuguese test guide is UTF-8 with BOM for Windows XP Notepad.
+The manual XP workflow creates `BiblioLED-<version>-XP-x86.zip` from the same executable validated by the 9-test XP suite. The ZIP contains exactly `BiblioLED.exe`, `config/settings.ini`, and a UTF-8-BOM `LEIA-ME.txt`; it contains no database, backups, exports, logs, PE report, or test guide. The workflow opens the ZIP and verifies the manifest before upload. The surrounding Actions artifact carries `SHA256SUMS.txt` and `build-info.txt` with source commit, workflow run, target, and hash. This is a candidate artifact only, not a GitHub Release.
 
-This ZIP is a disposable CI test artefact, not a normal portable distribution or release. The user confirmed that the executable runs well on Windows XP; the exact manually tested executable hash and scenario list remain unrecorded.
+Candidate-to-release process: pass Core and XP CI on one commit; inspect ZIP manifest and build metadata; download and verify the SHA-256; capture the target machine/OS, exact tested ZIP hash and scenarios (the user reports the test was OK, but the precise record is not yet supplied); then prepare release notes and publish a GitHub Release only after the record is complete and the user explicitly approves.
+
+## Loan-date range on Windows XP
+
+The XP-targeted w64devkit runtime uses a 32-bit `std::time_t`; standard `std::mktime` therefore returns `-1` for dates such as 2099. This is the C runtime's 32-bit time conversion limit, not a Windows XP system-clock or SQLite storage limit. The loan-rule API now stores loan timestamps as 64-bit `LoanTimestamp` and calls `_mktime64` / `_localtime64` on Windows. Regression tests cover parsing, formatting and storing a year-2099 loan on the XP-targeted build. Current system-clock operations still use the local system time and are distinct from parsing far-future loan dates.
 
 ## Portable directory layout and settings
 
@@ -290,13 +296,13 @@ The repository default branch is now `development` (changed by the user on 2026-
 
 ## Version 1.0 release checklist
 
-Version 1.0 is not ready until every release gate below is verified. Use only disposable synthetic data.
+The 1.0.0 candidate ZIP is available as a workflow artifact, not an official release. Use only disposable synthetic data. The user reports successful target-machine testing; the exact artifact/hash and scenario-by-scenario record are still required for traceability.
 
 
 ### Build and compatibility
-- [ ] Run Core CI on the release candidate: Linux, modern Win32 and Cppcheck all pass.
-- [ ] Run the manual XP-targeted workflow on the exact release-candidate commit; confirm all 9 tests, PE32/i386, GUI subsystem 5.01, and import/API checks.
-- [ ] Execute that exact artefact on Windows XP SP3/Pentium 4 and record SHA-256, OS details and test results.
+- [x] Run Core CI on the 1.0.0 candidate: Linux, modern Win32 and Cppcheck all pass in run 44938469974.
+- [x] Run the manual XP-targeted workflow on the candidate commit; all 9 tests, PE32/i386, GUI subsystem 5.01, import/API checks, and exact ZIP manifest validation passed in run 44939158463 (commit `d13c767`).
+- [x] User confirms XP testing is always on the latest build and that the latest candidate test was OK. Associate with run 44939158463 and its ZIP hash recorded above; machine details and individual scenario results were not supplied.
 - [ ] Verify all windows/dialogs, Portuguese text, icons, keyboard shortcuts, 800×600, sorting, history, statistics and CSV export.
 - [ ] Measure cold-start time, peak memory, executable size and responsiveness on the target machine.
 
@@ -310,8 +316,8 @@ Version 1.0 is not ready until every release gate below is verified. Use only di
 - [ ] Verify CSV content/encoding with quotes, semicolons, multiline titles, future and expired records.
 
 ### Packaging and release
-- [ ] Produce a clean portable ZIP with executable, default settings and required empty directories only; no database, backup, log or test artefacts.
+- [x] Produce a clean portable 1.0.0 candidate ZIP with executable, default settings and user instructions only; CI validates its exact manifest and absence of runtime data.
 - [ ] Verify launch from a path with spaces/accents and from a different working directory.
-- [ ] Add version 1.0 metadata, user instructions, release notes and SHA-256 checksums.
-- [ ] Re-extract into a fresh folder and repeat the launch/smoke test.
+- [x] Include version 1.0.0, Portuguese user instructions, candidate build metadata and a SHA-256 checksum in the CI artifact; the candidate remains unpublished as an official release.
+- [x] User confirms the latest XP build was tested successfully. Latest tested candidate is associated with run 44939158463; detailed test scenarios and target-machine specifications remain undocumented.
 - [ ] Review branch, commit, release files and documentation; keep `main` unchanged.
