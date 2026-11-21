@@ -46,7 +46,7 @@ Update the relevant notes when a material decision, implementation detail, or pr
 ## Engineering approach
 
 - Treat the current Python implementation as a functional reference, not as a mandatory implementation language.
-- The current preferred direction is C++ / Win32 / SQLite, but it is provisional until a proof of concept has been built and tested on Windows XP.
+- The selected implementation is C++ / Win32 / SQLite, targeting Windows XP SP3. The user reports successful target-machine testing; keep the exact candidate ZIP validation and release evidence distinct from that report.
 - Keep the interface, business rules, persistence, and infrastructure concerns separated.
 - The business rules must be testable without starting the graphical interface.
 - Prefer small, reviewable, documented changes over broad rewrites.

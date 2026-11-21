@@ -301,7 +301,7 @@ The 1.0.0 candidate ZIP is available as a workflow artifact, not an official rel
 
 ### Build and compatibility
 - [x] Run Core CI on the 1.0.0 candidate: Linux, modern Win32 and Cppcheck all pass in run 44938469974.
-- [x] Run the manual XP-targeted workflow on the candidate commit; all 9 tests, PE32/i386, GUI subsystem 5.01, and import/API checks passed in run 44938467176.
+- [x] Run the manual XP-targeted workflow on the candidate commit; all 9 tests, PE32/i386, GUI subsystem 5.01, import/API checks, and exact ZIP manifest validation passed in run 44939158463 (commit `d13c767`).
 - [ ] Attach the user's target-machine test to the exact candidate ZIP: record its SHA-256, XP SP3 hardware/OS details and scenario results. The user reports success, but the specific package and test record are not yet identified.
 - [ ] Verify all windows/dialogs, Portuguese text, icons, keyboard shortcuts, 800×600, sorting, history, statistics and CSV export.
 - [ ] Measure cold-start time, peak memory, executable size and responsiveness on the target machine.
@@ -318,6 +318,6 @@ The 1.0.0 candidate ZIP is available as a workflow artifact, not an official rel
 ### Packaging and release
 - [x] Produce a clean portable 1.0.0 candidate ZIP with executable, default settings and user instructions only; CI validates its exact manifest and absence of runtime data.
 - [ ] Verify launch from a path with spaces/accents and from a different working directory.
-- [ ] Add version 1.0 metadata, user instructions, release notes and SHA-256 checksums.
+- [x] Include version 1.0.0, Portuguese user instructions, candidate build metadata and a SHA-256 checksum in the CI artifact; the candidate remains unpublished as an official release.
 - [ ] Re-extract into a fresh folder and repeat the launch/smoke test.
 - [ ] Review branch, commit, release files and documentation; keep `main` unchanged.
