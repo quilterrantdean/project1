@@ -9,7 +9,7 @@ Confirmed preferences:
 - The XP machine is locally accessible and can stay logged in with the desktop unlocked during testing.
 - Target display resolution is 800 x 600.
 - Run full headless/integration test coverage where practical. GUI automation is not currently selected; UI coverage remains a short manual checklist.
-- Python is acceptable. The user reports that their Python 3.10 is an XP-compatible backport. Before depending on it, verify the exact distribution/build, 32-bit compatibility and required standard-library modules on the target XP machine.
+- The XP machine has a portable 32-bit Python 3.10 backport; standard-library-only scripts are preferred. The exact distribution name/build is still to be recorded. Smoke-test its version, architecture and standard-library imports before relying on it.
 - Use only isolated synthetic databases and disposable folders. Remove temporary data after a fully successful run; retain the run folder, logs and failure artifacts if any test fails.
 - Include stress and deliberately induced failures where safe. Do not use the real application installation or data, and do not mistake forced process termination for physical power-loss testing.
 
@@ -21,7 +21,7 @@ Extend the existing manual XP workflow to produce a separate **test bundle**, di
 
 - the exact `BiblioLED.exe` built and inspected by that workflow;
 - all nine existing XP-targeted C++ test executables;
-- a small runner (`run-tests.bat` as the no-runtime fallback; optionally a Python 3.4.4 runner if that runtime is confirmed);
+- a standard-library-only Python 3 runner; optionally a `.bat` launcher for convenience;
 - a manifest/build-info file with source commit, workflow run, target and SHA-256 values;
 - concise instructions to run from a fresh disposable directory at 800 x 600.
 
@@ -67,6 +67,6 @@ First audit current test binaries' temporary-directory behavior and exit codes. 
 5. **Bounded stress and manual GUI checklist:** run repeatable stress profiles and the 800 x 600 GUI checklist on the latest build.
 6. **Release gate:** require Core CI, XP CI, actual-XP headless bundle on the latest build, no unexplained failures, and review of the GUI checklist before declaring 1.0.0 ready. Do not publish a GitHub Release without explicit approval.
 
-## Unresolved tool choice
+## Remaining environment check
 
-The user reports an XP-compatible Python 3.10 backport. Verify the exact distribution/version/architecture and a minimal script on XP before selecting it for the runner. If it works with the needed standard library, use it for orchestration and reporting; otherwise retain the dependency-free batch runner. AutoIt/AutoHotkey and GUI automation libraries are not selected; GUI smoke remains manual for now.
+The user confirms the XP-side Python is a portable 32-bit Python 3.10 backport and prefers standard-library-only tooling. Use it as the primary runner, with a batch launcher if useful. Before implementation depends on it, record the exact distribution/build and run a tiny smoke check for version, architecture, subprocess execution, filesystem operations, JSON and hashing on the XP machine. AutoIt/AutoHotkey and GUI automation libraries are not selected; GUI smoke remains manual for now.
