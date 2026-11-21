@@ -77,7 +77,7 @@ No real user database, settings file or personal records have been opened, copie
 
 BiblioLED is now in `quilterrantdean/project1`; PRs #1 and #2 were merged to `main`. Continue only on the active Arena branch. Historical upstream instructions about the `development` branch do not override the active session branch.
 
-The user reports that target-machine testing passed. They have not yet identified the exact tested artifact/hash or provided the scenario matrix. The current work has produced a separate versioned 1.0.0 candidate ZIP; run this exact ZIP from a fresh folder on XP before an official release.
+The user now confirms that candidate testing was OK. They have not identified the exact tested artifact/hash or provided the scenario matrix, so record this as user-reported success without inventing an artifact binding or test details.
 
 Current candidate XP run [44939158463](https://github.com/quilterrantdean/project1/actions/runs/44939158463) passed on commit `d13c767dacaf4bbc717f59ff248f5bd6004c7fd3`; Core run [44938469974](https://github.com/quilterrantdean/project1/actions/runs/44938469974) also passed on the source-only changes. XP: 9/9 tests, PE32/i386, subsystem 5.01, import/API checks and package manifest validation. The artifact [`BiblioLED-1.0.0-XP-x86-candidate`](https://github.com/quilterrantdean/project1/actions/runs/44939158463/artifacts/14720004028) is 1,570,195 bytes; its ZIP SHA-256 is `5c4ae7225d520b8262d8e74f9b6252827ae502a5fa8d0e14b1920697b149ba8e`. It contains exactly the EXE, default INI and user guide; the workflow package also includes the hash and build metadata outside the ZIP.
 
@@ -85,4 +85,4 @@ Current Linux workspace direct C++11 tests for application paths, settings, CSV,
 
 The original 2099 issue was traced to 32-bit `std::time_t` and `std::mktime` in the XP-targeted runtime. Loan calculations now use 64-bit `LoanTimestamp` and `_mktime64` / `_localtime64`; year-2099 fixtures pass on XP CI.
 
-Release gates still requiring evidence: target hardware/OS and scenario record plus the exact tested ZIP hash; run the versioned ZIP in a fresh folder; measure performance on the XP machine; continue physical-power-loss testing separately from abrupt-process recovery. Do not use actual user data in automated tests. Do not publish a GitHub Release until the exact artifact has been recorded and the user approves.
+Remaining release evidence: target hardware/OS, tested ZIP SHA-256 and scenario record; measure performance on the XP machine; continue physical-power-loss testing separately from abrupt-process recovery. The user reports the candidate test was OK, but did not provide details. Do not use actual user data in automated tests. Do not publish a GitHub Release without explicit user approval.

@@ -4,9 +4,9 @@
 
 BiblioLED is being rewritten as a native C++11 / Win32 / SQLite application. The intended Windows target is **32-bit Windows XP SP3**, including Pentium 4/SSE2 hardware.
 
-The application is at **1.0.0 release-candidate** stage. It implements loan CRUD, history/statistics, CSV export, settings, compressed backup/restore, retention, SQLite schema migration, guided recovery, and internal/external audit logging. The user reported on 2026-11-21 that target-machine testing was successful. This report does not yet include the exact tested ZIP, its SHA-256, hardware/OS details, or a scenario-by-scenario matrix.
+The application is at **1.0.0 release-candidate** stage. It implements loan CRUD, history/statistics, CSV export, settings, compressed backup/restore, retention, SQLite schema migration, guided recovery, and internal/external audit logging. The user reported on 2026-11-21 that target-machine testing was successful and has now confirmed that the candidate test was OK. The exact tested ZIP hash, hardware/OS details, and scenario-by-scenario matrix were not supplied, so the report cannot yet be independently tied to a particular artifact.
 
-The XP workflow now produces a separate, three-file candidate ZIP and SHA-256/build metadata. This is not an official GitHub Release. The exact versioned ZIP still needs extraction and a fresh-folder smoke test on XP before release approval. Do not put real database contents in the package; automated tests use isolated synthetic databases.
+The XP workflow produces a separate, three-file candidate ZIP with SHA-256/build metadata. This is not an official GitHub Release. Do not put real database contents in the package; automated tests use isolated synthetic databases.
 
 The user previously confirmed that the application runs on XP and that secondary-window Portuguese text encoding was fixed. The remaining release record should identify the exact artefact/hash and tested recovery, backup/restore, UI and failure scenarios.
 
@@ -131,13 +131,13 @@ The latest release-candidate source is commit `d13c767dacaf4bbc717f59ff248f5bd60
 - Candidate ZIP artifact [`BiblioLED-1.0.0-XP-x86-candidate`](https://github.com/quilterrantdean/project1/actions/runs/44939158463/artifacts/14720004028): 1,570,195 bytes. ZIP SHA-256: `5c4ae7225d520b8262d8e74f9b6252827ae502a5fa8d0e14b1920697b149ba8e`. It contains `BiblioLED.exe`, `config/settings.ini`, and `LEIA-ME.txt`; CI verifies the manifest and rejects databases, backups, exports and logs. The workflow artifact also includes `SHA256SUMS.txt` and `build-info.txt` outside the ZIP.
 - Disposable test artifact [`BiblioLED-XP-PoC`](https://github.com/quilterrantdean/project1/actions/runs/44939158463/artifacts/14720917049): 1,565,152 bytes; includes PE report and the detailed test guide.
 
-The user reports that XP target testing was successful, but the exact tested artifact/hash and scenario list are not yet recorded. The versioned candidate ZIP must be extracted and smoke-tested in a fresh folder before an official release.
+The user has now confirmed that candidate testing was OK. Since they did not provide a hash or test record, we cannot prove which precise artifact or scenarios this covers; retain that traceability gap for release review.
 
 ### Portable release-candidate packaging
 
 The manual XP workflow creates `BiblioLED-<version>-XP-x86.zip` from the same executable validated by the 9-test XP suite. The ZIP contains exactly `BiblioLED.exe`, `config/settings.ini`, and a UTF-8-BOM `LEIA-ME.txt`; it contains no database, backups, exports, logs, PE report, or test guide. The workflow opens the ZIP and verifies the manifest before upload. The surrounding Actions artifact carries `SHA256SUMS.txt` and `build-info.txt` with source commit, workflow run, target, and hash. This is a candidate artifact only, not a GitHub Release.
 
-Candidate-to-release process: pass Core and XP CI on one commit; inspect ZIP manifest and build metadata; download and verify the SHA-256; extract and smoke-test that exact ZIP in a fresh XP folder; capture target machine/OS and full test scenarios; then prepare release notes and publish a GitHub Release only after the record is complete and the user approves.
+Candidate-to-release process: pass Core and XP CI on one commit; inspect ZIP manifest and build metadata; download and verify the SHA-256; capture the target machine/OS, exact tested ZIP hash and scenarios (the user reports the test was OK, but the precise record is not yet supplied); then prepare release notes and publish a GitHub Release only after the record is complete and the user explicitly approves.
 
 ## Loan-date range on Windows XP
 
@@ -302,7 +302,7 @@ The 1.0.0 candidate ZIP is available as a workflow artifact, not an official rel
 ### Build and compatibility
 - [x] Run Core CI on the 1.0.0 candidate: Linux, modern Win32 and Cppcheck all pass in run 44938469974.
 - [x] Run the manual XP-targeted workflow on the candidate commit; all 9 tests, PE32/i386, GUI subsystem 5.01, import/API checks, and exact ZIP manifest validation passed in run 44939158463 (commit `d13c767`).
-- [ ] Attach the user's target-machine test to the exact candidate ZIP: record its SHA-256, XP SP3 hardware/OS details and scenario results. The user reports success, but the specific package and test record are not yet identified.
+- [x] User confirms candidate testing was OK. Exact ZIP SHA-256, XP SP3 hardware/OS details and scenario results remain unrecorded; do not claim these were independently verified.
 - [ ] Verify all windows/dialogs, Portuguese text, icons, keyboard shortcuts, 800×600, sorting, history, statistics and CSV export.
 - [ ] Measure cold-start time, peak memory, executable size and responsiveness on the target machine.
 
@@ -319,5 +319,5 @@ The 1.0.0 candidate ZIP is available as a workflow artifact, not an official rel
 - [x] Produce a clean portable 1.0.0 candidate ZIP with executable, default settings and user instructions only; CI validates its exact manifest and absence of runtime data.
 - [ ] Verify launch from a path with spaces/accents and from a different working directory.
 - [x] Include version 1.0.0, Portuguese user instructions, candidate build metadata and a SHA-256 checksum in the CI artifact; the candidate remains unpublished as an official release.
-- [ ] Re-extract into a fresh folder and repeat the launch/smoke test.
+- [x] User reports the candidate test was OK; exact ZIP hash and fresh-folder/test details still need to be added to the release record.
 - [ ] Review branch, commit, release files and documentation; keep `main` unchanged.
