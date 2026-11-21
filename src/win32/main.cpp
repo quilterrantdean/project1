@@ -40,16 +40,16 @@ struct RecordDialogContext {
 
 struct VisibleLoan {
     biblioled::LoanRecord record;
-    std::time_t loan_time;
-    std::time_t expiry;
+    biblioled::LoanTimestamp loan_time;
+    biblioled::LoanTimestamp expiry;
     long days_remaining;
 
     std::wstring title_sort;
     std::wstring type_sort;
 
     VisibleLoan()
-        : loan_time(static_cast<std::time_t>(-1)),
-          expiry(static_cast<std::time_t>(-1)),
+        : loan_time(static_cast<biblioled::LoanTimestamp>(-1)),
+          expiry(static_cast<biblioled::LoanTimestamp>(-1)),
           days_remaining(0)
     {
     }
@@ -330,7 +330,7 @@ INT_PTR CALLBACK LoanDialogProc(HWND dialog, UINT message, WPARAM wParam, LPARAM
         }
 
         const std::string loan_date = WideToUtf8(date) + " " + WideToUtf8(time);
-        if (biblioled::ParseLoanDateTime(loan_date) == static_cast<std::time_t>(-1)) {
+        if (biblioled::ParseLoanDateTime(loan_date) == static_cast<biblioled::LoanTimestamp>(-1)) {
             RecordApplicationDiagnostic(
                 "warning", "loan_dialog", "reason=invalid_loan_date_time");
             MessageBoxW(dialog,

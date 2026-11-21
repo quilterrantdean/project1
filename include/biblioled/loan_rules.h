@@ -6,17 +6,22 @@
 
 namespace biblioled {
 
+// The XP-targeted 32-bit C runtime has a 32-bit std::time_t. Keep persisted
+// local loan dates in a 64-bit timestamp so valid four-digit years do not
+// inherit the runtime's 2038 limit.
+typedef long long LoanTimestamp;
+
 struct LoanEvaluation {
-    std::time_t loan_time;
-    std::time_t expiry_time;
+    LoanTimestamp loan_time;
+    LoanTimestamp expiry_time;
     long days_remaining;
     bool future_dated;
     bool expired;
     bool visible_in_operational_list;
 
     LoanEvaluation()
-        : loan_time(static_cast<std::time_t>(-1)),
-          expiry_time(static_cast<std::time_t>(-1)),
+        : loan_time(static_cast<LoanTimestamp>(-1)),
+          expiry_time(static_cast<LoanTimestamp>(-1)),
           days_remaining(0),
           future_dated(false),
           expired(false),
@@ -37,16 +42,17 @@ struct QuotaAvailability {
     QuotaAvailability() : daily_remaining(0), monthly_remaining(0) {}
 };
 
-std::time_t ParseLoanDateTime(const std::string& value);
-std::string FormatLocalDateTime(std::time_t value, const char* format);
-std::time_t AddLocalCalendarDays(std::time_t value, int days);
+LoanTimestamp ParseLoanDateTime(const std::string& value);
+std::string FormatLocalDateTime(LoanTimestamp value, const char* format);
+bool GetLocalDateTimeParts(LoanTimestamp value, std::tm* parts);
+LoanTimestamp AddLocalCalendarDays(LoanTimestamp value, int days);
 
 bool EvaluateLoanDateTime(const std::string& loan_date,
                           int duration_days,
-                          std::time_t now,
+                          LoanTimestamp now,
                           LoanEvaluation* evaluation);
 
-bool BuildQuotaWindowBounds(std::time_t now,
+bool BuildQuotaWindowBounds(LoanTimestamp now,
                             int monthly_window_days,
                             QuotaWindowBounds* bounds);
 
