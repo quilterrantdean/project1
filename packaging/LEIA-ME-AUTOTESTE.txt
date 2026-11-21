@@ -1,0 +1,51 @@
+BiblioLED — testes automáticos para Windows XP SP3 (32 bits)
+
+Este pacote é separado do candidato portátil. Inclui o executável da aplicação
+apenas para identificação da build e os executáveis de teste; não contém uma base
+de dados nem dados de utilizador.
+
+REQUISITOS
+
+- Windows XP SP3 de 32 bits.
+- Python 3 compatível com XP. A instalação do utilizador pode usar
+  C:\Python31018\python.exe; confirme primeiro que essa versão inicia no XP.
+  A versão 3.4.4 disponível em PATH pode ser usada como alternativa.
+- Execute com a sessão iniciada; não são necessários privilégios de administrador.
+
+EXECUÇÃO
+
+1. Extraia o pacote completo para uma pasta de ensaio própria.
+2. Abra a linha de comandos nessa pasta.
+3. Execute:
+
+   C:\Python31018\python.exe run_xp_tests.py
+
+   Se essa versão não estiver disponível, experimente:
+
+   python run_xp_tests.py
+
+4. Opcionalmente, repita a suite até 25 vezes para ensaio limitado de repetição:
+
+   C:\Python31018\python.exe run_xp_tests.py --repeat 5
+
+O runner verifica os hashes do manifesto antes de iniciar os testes. Cada teste
+corre num directório de trabalho próprio e recebe TEMP/TMP próprios. No fim,
+retorna código zero se todos os testes passarem. Os ficheiros temporários são
+removidos apenas após sucesso completo. Se houver falha ou interrupção, os logs,
+o resumo JSON e os directórios de ensaio ficam em %TEMP%\BiblioLED-XP-test-*.
+
+SEGURANÇA
+
+- Os testes geram apenas dados sintéticos nos directórios temporários.
+- Não copie para este pacote a instalação real, config, base de dados, cópias,
+  exports ou logs do utilizador.
+- Não execute os testes a partir da pasta de dados reais.
+- O runner não automatiza a interface gráfica. Use a checklist manual separada
+  para os fluxos GUI a 800 x 600.
+- Este pacote de teste não é um instalador nem um lançamento oficial.
+
+RESULTADOS
+
+O runner informa cada teste individualmente e o total. O manifesto regista o
+commit e o workflow que produziram os executáveis; compare esses dados com a
+build mais recente antes de usar os resultados como gate da versão 1.0.0.
