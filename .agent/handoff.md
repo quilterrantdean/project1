@@ -70,3 +70,13 @@ No real user database, settings file or personal records have been opened, copie
 - Work only on `development`; never write directly to `main` or `master`.
 - Keep repository text/commit messages in English; the application UI remains European Portuguese with pre-1990 spelling.
 - No real user data in tests. Do not add automatic CI triggers for documentation-only commits or automatic XP builds.
+
+## Arena continuation update — 2026-11-21
+
+BiblioLED was imported into `quilterrantdean/project1` and PR #1 was merged to `main`. Continue only on the active Arena branch; do not assume the upstream `development` branch name applies to this repository/session.
+
+The XP workflow passed from `arena/402f73ec-project1` at commit `ee37c889d3bcd42df8de5c765996aa1f66623d19`: [run 44934446242](https://github.com/quilterrantdean/project1/actions/runs/44934446242). Build, 9/9 tests, PE32/i386, Windows GUI subsystem 5.01, import checks, and artefact upload all passed. The `BiblioLED-XP-PoC` artefact is 1,561,146 bytes. Core run [44934716483](https://github.com/quilterrantdean/project1/actions/runs/44934716483) also passed Ubuntu tests, modern Win32 compile/store tests, and Cppcheck.
+
+The XP run initially failed because test fixtures used year 2099; the XP-targeted runtime rejected those values. Test fixtures now use 2035. Investigate and document the supported date range as a 1.0 compatibility item. The user's real database must never be used.
+
+Immediate next step: run the uploaded artefact on Windows XP SP3 in a fresh disposable folder. Record the artifact hash, machine/OS details, and exact scenarios; exercise recovery, backups, and restore before release planning. The application remains a proof of concept until this target-system validation is complete.
