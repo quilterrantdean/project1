@@ -9,7 +9,7 @@ Confirmed preferences:
 - The XP machine is locally accessible and can stay logged in with the desktop unlocked during testing.
 - Target display resolution is 800 x 600.
 - Run full headless/integration test coverage where practical. GUI automation is not currently selected; UI coverage remains a short manual checklist.
-- Python is acceptable. The user will verify whether the XP installation has Python 3.4.4 or 3.10; Python 3.10 itself is not XP-compatible.
+- Python is acceptable. The user reports that their Python 3.10 is an XP-compatible backport. Before depending on it, verify the exact distribution/build, 32-bit compatibility and required standard-library modules on the target XP machine.
 - Use only isolated synthetic databases and disposable folders. Remove temporary data after a fully successful run; retain the run folder, logs and failure artifacts if any test fails.
 - Include stress and deliberately induced failures where safe. Do not use the real application installation or data, and do not mistake forced process termination for physical power-loss testing.
 
@@ -69,4 +69,4 @@ First audit current test binaries' temporary-directory behavior and exit codes. 
 
 ## Unresolved tool choice
 
-The user will check whether XP has Python 3.4.4 or 3.10. Python 3.10 is useful only on a modern host; it cannot be the XP-side runner. Until the XP version is confirmed, use a batch runner as the dependency-free baseline. AutoIt/AutoHotkey and GUI automation libraries are not selected; GUI smoke remains manual for now.
+The user reports an XP-compatible Python 3.10 backport. Verify the exact distribution/version/architecture and a minimal script on XP before selecting it for the runner. If it works with the needed standard library, use it for orchestration and reporting; otherwise retain the dependency-free batch runner. AutoIt/AutoHotkey and GUI automation libraries are not selected; GUI smoke remains manual for now.
