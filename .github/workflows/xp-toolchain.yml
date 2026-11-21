@@ -64,7 +64,21 @@ jobs:
         run: cmake --build --preset xp-x86-w64devkit --parallel
 
       - name: Run SQLite store tests
-        run: ctest --preset xp-x86-w64devkit
+        shell: pwsh
+        run: |
+          $testOutput = & ctest --preset xp-x86-w64devkit --output-on-failure 2>&1
+          $testExitCode = $LASTEXITCODE
+          $testOutput | ForEach-Object { Write-Output $_ }
+
+          if ($testExitCode -ne 0) {
+            $diagnostic = ($testOutput | Out-String)
+            if ($diagnostic.Length -gt 6000) {
+              $diagnostic = $diagnostic.Substring(0, 6000) + "`n[output truncated]"
+            }
+            $diagnostic = $diagnostic.Replace('%', '%25').Replace("`r", '%0D').Replace("`n", '%0A')
+            Write-Output "::error title=XP CTest failure::$diagnostic"
+            exit $testExitCode
+          }
 
       - name: Inspect executable target and imports
         shell: pwsh
