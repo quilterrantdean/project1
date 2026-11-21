@@ -77,6 +77,7 @@ def machine_info():
         "python_bits": struct.calcsize("P") * 8,
         "platform": platform.platform(),
         "machine": platform.machine(),
+        "processor": platform.processor(),
         "windows_version": platform.win32_ver(),
         "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "display": None,
@@ -90,6 +91,28 @@ def machine_info():
             }
         except Exception as error:
             info["display_error"] = str(error)
+        try:
+            class MemoryStatusEx(ctypes.Structure):
+                _fields_ = [
+                    ("dwLength", ctypes.c_ulong),
+                    ("dwMemoryLoad", ctypes.c_ulong),
+                    ("ullTotalPhys", ctypes.c_ulonglong),
+                    ("ullAvailPhys", ctypes.c_ulonglong),
+                    ("ullTotalPageFile", ctypes.c_ulonglong),
+                    ("ullAvailPageFile", ctypes.c_ulonglong),
+                    ("ullTotalVirtual", ctypes.c_ulonglong),
+                    ("ullAvailVirtual", ctypes.c_ulonglong),
+                    ("ullAvailExtendedVirtual", ctypes.c_ulonglong),
+                ]
+            memory = MemoryStatusEx()
+            memory.dwLength = ctypes.sizeof(memory)
+            if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(memory)):
+                info["memory_bytes"] = {
+                    "total_physical": int(memory.ullTotalPhys),
+                    "available_physical": int(memory.ullAvailPhys),
+                }
+        except Exception as error:
+            info["memory_error"] = str(error)
     return info
 
 
@@ -137,6 +160,7 @@ def main():
     info = machine_info()
     info["source_commit"] = manifest.get("source_commit")
     info["workflow_run"] = manifest.get("workflow_run")
+    info["application_sha256"] = manifest.get("files", {}).get("BiblioLED.exe")
     info["repeat"] = args.repeat
     print("BiblioLED XP automated tests")
     print("Source commit: %s" % (info["source_commit"] or "unknown"))
@@ -170,16 +194,24 @@ def main():
                 started = time.time()
                 print("RUN  %s" % label)
                 with open(log_path, "wb") as log_file:
-                    process = subprocess.Popen(
-                        [command], cwd=work_dir, env=environment,
-                        stdout=log_file, stderr=subprocess.STDOUT)
                     try:
-                        exit_code = process.wait()
-                    except KeyboardInterrupt:
-                        interrupted = True
-                        process.terminate()
-                        process.wait()
-                        exit_code = 130
+                        process = subprocess.Popen(
+                            [command], cwd=work_dir, env=environment,
+                            stdout=log_file, stderr=subprocess.STDOUT)
+                    except OSError as error:
+                        log_file.write(("Could not start test: %s\n" % error).encode("utf-8"))
+                        exit_code = 127
+                    else:
+                        try:
+                            exit_code = process.wait()
+                        except KeyboardInterrupt:
+                            interrupted = True
+                            try:
+                                process.terminate()
+                                process.wait()
+                            except OSError:
+                                pass
+                            exit_code = 130
                 elapsed = time.time() - started
                 result = {
                     "name": label,
