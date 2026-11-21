@@ -1,0 +1,39 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 28,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "xp-x86-w64devkit",
+      "displayName": "Windows XP x86 (w64devkit)",
+      "generator": "MinGW Makefiles",
+      "binaryDir": "${sourceDir}/build/xp-x86-w64devkit",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_TESTING": "ON",
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++",
+        "CMAKE_RC_COMPILER": "windres",
+        "CMAKE_MAKE_PROGRAM": "make"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "xp-x86-w64devkit",
+      "configurePreset": "xp-x86-w64devkit"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "xp-x86-w64devkit",
+      "configurePreset": "xp-x86-w64devkit",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,99 @@
+name: Core tests
+
+on:
+  push:
+    branches:
+      - development
+    paths:
+      - 'CMakeLists.txt'
+      - 'CMakePresets.json'
+      - 'config/**'
+      - 'include/**'
+      - 'src/**'
+      - 'tests/**'
+      - '.github/workflows/**'
+  pull_request:
+    branches:
+      - development
+    paths:
+      - 'CMakeLists.txt'
+      - 'CMakePresets.json'
+      - 'config/**'
+      - 'include/**'
+      - 'src/**'
+      - 'tests/**'
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+jobs:
+  core-tests:
+    name: Core tests (Ubuntu)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, Node 24
+
+      - name: Install SQLite development files
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev zlib1g-dev
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+  win32-compile:
+    name: Win32 compile check (modern Windows SDK)
+    runs-on: windows-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, Node 24
+
+      - name: Configure Win32
+        run: cmake -S . -B build -A Win32 -DBUILD_TESTING=ON
+
+      - name: Build Win32 application and tests
+        run: cmake --build build --config Release --parallel
+
+      - name: Test Win32 SQLite store
+        run: ctest --test-dir build -C Release --output-on-failure
+
+  static-analysis:
+    name: Cppcheck (portable C++11)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, Node 24
+
+      - name: Install Cppcheck
+        run: sudo apt-get update && sudo apt-get install -y cppcheck
+
+      - name: Analyse portable C++11 sources and tests
+        run: |
+          cppcheck_version="$(cppcheck --version)"
+          echo "$cppcheck_version"
+          if [ "$cppcheck_version" != "Cppcheck 2.19.0" ]; then
+            echo "Expected Cppcheck 2.19.0; refusing an unreviewed analyser version." >&2
+            exit 1
+          fi
+          cppcheck \
+            --enable=warning,performance,portability \
+            --error-exitcode=1 \
+            --inline-suppr \
+            --std=c++11 \
+            --language=c++ \
+            -I include \
+            src/core \
+            src/infrastructure/backup_compression.cpp \
+            src/infrastructure/backup_retention.cpp \
+            src/infrastructure/settings_store.cpp \
+            tests/settings_store_tests.cpp \
+            tests/loan_csv_export_tests.cpp \
+            tests/loan_rules_tests.cpp \
+            tests/loan_statistics_tests.cpp \
+            tests/loan_store_tests.cpp \
+            tests/backup_compression_tests.cpp \
+            tests/backup_retention_tests.cpp
