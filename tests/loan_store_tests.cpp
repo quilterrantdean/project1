@@ -131,7 +131,7 @@ bool TestUnicodeDatabasePath()
     if (ok) {
         biblioled::LoanRecord record;
         record.title = "Registo num caminho Unicode";
-        record.loan_date = "2099-03-01 10:00";
+        record.loan_date = "2035-03-01 10:00";
         record.type = "livro";
         ok = first.Insert(&record, &error);
     }
@@ -570,7 +570,7 @@ int PrepareInterruptedTransaction(const std::string& database,
         if (sqlite3_bind_text(statement, 1, title.c_str(),
                               static_cast<int>(title.size()),
                               SQLITE_TRANSIENT) != SQLITE_OK ||
-            sqlite3_bind_text(statement, 2, "2099-12-31 23:59", -1,
+            sqlite3_bind_text(statement, 2, "2035-12-31 23:59", -1,
                               SQLITE_STATIC) != SQLITE_OK ||
             sqlite3_bind_text(statement, 3, "livro", -1,
                               SQLITE_STATIC) != SQLITE_OK ||
@@ -684,7 +684,7 @@ void TestAbruptProcessInterruptionRecovery(const std::string& database,
 
     biblioled::LoanRecord committed;
     committed.title = "Registo confirmado antes da interrupção";
-    committed.loan_date = "2099-01-01 10:00";
+    committed.loan_date = "2035-01-01 10:00";
     committed.type = "livro";
     Check(initial.Insert(&committed, &error),
           "a known committed record should be written before child termination");
@@ -763,7 +763,7 @@ void TestRollbackFailureClosesStore(const std::string& database,
           "rollback-failure test should start an explicit transaction");
     Check(Execute(raw,
         "INSERT INTO loans (title, loan_date, type) "
-        "VALUES ('Registo não confirmado', '2099-04-01 10:00', 'livro');"),
+        "VALUES ('Registo não confirmado', '2035-04-01 10:00', 'livro');"),
         "rollback-failure test should create an uncommitted loan row");
     Check(sqlite3_get_autocommit(raw) == 0,
           "the injected transaction should remain active before rollback");
@@ -924,7 +924,7 @@ int main(int argc, char** argv)
         biblioled::LoanRecord missing_record;
         missing_record.id = 42;
         missing_record.title = "Registo inexistente";
-        missing_record.loan_date = "2099-01-01 10:00";
+        missing_record.loan_date = "2035-01-01 10:00";
         missing_record.type = "livro";
         Check(!no_op_store.Update(missing_record, &error),
               "updating a missing record should fail");
@@ -977,7 +977,7 @@ int main(int argc, char** argv)
     if (candidate_store.IsOpen()) {
         biblioled::LoanRecord candidate_loan;
         candidate_loan.title = "Candidate schema validation";
-        candidate_loan.loan_date = "2099-01-01 10:00";
+        candidate_loan.loan_date = "2035-01-01 10:00";
         candidate_loan.type = "livro";
         Check(candidate_store.Insert(&candidate_loan, &error),
               "loan mutation should create a proper daily snapshot when the candidate schema is invalid");
@@ -1010,7 +1010,7 @@ int main(int argc, char** argv)
     // CRUD writes and audit rows must commit or roll back together.
     biblioled::LoanRecord book;
     book.title = "Açúcar e café";
-    book.loan_date = "2099-01-10 12:30";
+    book.loan_date = "2035-01-10 12:30";
     book.type = "livro";
     Check(store.Insert(&book, &error), "insert should succeed");
     Check(book.id > 0, "insert should return the generated identifier");
@@ -1041,7 +1041,7 @@ int main(int argc, char** argv)
 
     biblioled::LoanRecord audio;
     audio.title = "Audiolivro de teste";
-    audio.loan_date = "2099-01-11 09:15";
+    audio.loan_date = "2035-01-11 09:15";
     audio.type = "audiolivro";
     Check(store.Insert(&audio, &error), "second insert should succeed");
     Check(store.LastSessionBackupPath() == first_backup,
@@ -1057,7 +1057,7 @@ int main(int argc, char** argv)
     Check(!store.Update(invalid_update, &error),
           "LoanStore must reject invalid update dates");
     Check(store.GetById(book.id, &book, &error) &&
-          book.loan_date == "2099-01-10 12:30",
+          book.loan_date == "2035-01-10 12:30",
           "invalid-date update must leave the original record unchanged");
     Check(store.GetAuditEvents(&events, &error) && events.size() == 2,
           "invalid-date update must not add an audit event");
@@ -1148,7 +1148,7 @@ int main(int argc, char** argv)
     if (zlib_manual_decoded != zlib_manual_backup) RemoveDatabaseFiles(zlib_manual_decoded);
 
     int count = 0;
-    Check(store.CountSince("2099-01-01 00:00", &count, &error),
+    Check(store.CountSince("2035-01-01 00:00", &count, &error),
           "count since date should succeed");
     Check(count == 2, "future-dated records should be included in quota counts");
     store.Close();
@@ -1246,7 +1246,7 @@ int main(int argc, char** argv)
 
         biblioled::LoanRecord rejected;
         rejected.title = "Não deve ficar gravado";
-        rejected.loan_date = "2099-02-01 10:00";
+        rejected.loan_date = "2035-02-01 10:00";
         rejected.type = "livro";
         Check(!reopened.Insert(&rejected, &error),
               "loan insert should fail when its audit row cannot be inserted");
@@ -1270,7 +1270,7 @@ int main(int argc, char** argv)
           "enabled but unavailable external logging should expose blocked state");
     biblioled::LoanRecord log_blocked;
     log_blocked.title = "Bloqueado pelo log";
-    log_blocked.loan_date = "2099-02-02 10:00";
+    log_blocked.loan_date = "2035-02-02 10:00";
     log_blocked.type = "livro";
     Check(!reopened.Insert(&log_blocked, &error),
           "unavailable enabled external logging should block a loan mutation");
@@ -1321,7 +1321,7 @@ int main(int argc, char** argv)
     const size_t events_before_disabled_insert = events.size();
     biblioled::LoanRecord logging_disabled;
     logging_disabled.title = "Registo com log externo desactivado";
-    logging_disabled.loan_date = "2099-02-03 10:00";
+    logging_disabled.loan_date = "2035-02-03 10:00";
     logging_disabled.type = "livro";
     Check(reopened.Insert(&logging_disabled, &error),
           "mutations should remain available while external logging is disabled");
@@ -1638,7 +1638,7 @@ int main(int argc, char** argv)
     if (blocked.IsOpen()) {
         biblioled::LoanRecord forbidden;
         forbidden.title = "Must not be inserted";
-        forbidden.loan_date = "2099-02-01 10:00";
+        forbidden.loan_date = "2035-02-01 10:00";
         forbidden.type = "livro";
         Check(!blocked.Insert(&forbidden, &error),
               "a failed session backup must block the database mutation");
@@ -1666,7 +1666,7 @@ int main(int argc, char** argv)
     if (recovery_source.IsOpen()) {
         biblioled::LoanRecord recovery_record;
         recovery_record.title = "Registo para recuperação";
-        recovery_record.loan_date = "2099-03-01 10:00";
+        recovery_record.loan_date = "2035-03-01 10:00";
         recovery_record.type = "livro";
         Check(recovery_source.Insert(&recovery_record, &error),
               "recovery source record should be inserted");
