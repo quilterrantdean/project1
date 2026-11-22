@@ -156,6 +156,121 @@ jobs:
           )
           $report | Set-Content -Path (Join-Path $env:RUNNER_TEMP "pe-inspection.txt") -Encoding utf8
 
+      - name: Package autonomous XP test bundle
+        shell: pwsh
+        run: |
+          $bundle = Join-Path $env:RUNNER_TEMP "BiblioLED-XP-Autotest"
+          New-Item -ItemType Directory -Force -Path $bundle | Out-Null
+
+          $executables = @("BiblioLED.exe") + @(
+            "application_paths_tests.exe",
+            "settings_store_tests.exe",
+            "loan_csv_export_tests.exe",
+            "loan_rules_tests.exe",
+            "loan_statistics_tests.exe",
+            "loan_store_tests.exe",
+            "backup_compression_tests.exe",
+            "backup_retention_tests.exe",
+            "audit_log_tests.exe"
+          )
+          foreach ($name in $executables) {
+            $source = Join-Path $env:GITHUB_WORKSPACE "build\xp-x86-w64devkit\$name"
+            if (-not (Test-Path $source -PathType Leaf)) {
+              throw "Expected XP test executable is missing: $name"
+            }
+            Copy-Item $source (Join-Path $bundle $name)
+          }
+          Copy-Item "packaging\run_xp_tests.py" (Join-Path $bundle "run_xp_tests.py")
+          Get-Content "packaging\LEIA-ME-AUTOTESTE.txt" -Raw |
+            Set-Content -Path (Join-Path $bundle "LEIA-ME-AUTOTESTE.txt") -Encoding utf8BOM
+          Copy-Item (Join-Path $env:RUNNER_TEMP "pe-inspection.txt") (Join-Path $bundle "pe-inspection.txt")
+
+          # Bundle non-system MinGW runtime DLLs required by the app and tests.
+          # Resolve recursively so the test bundle remains runnable outside CI's PATH.
+          $xpSystemDlls = @{}
+          @(
+            "kernel32.dll", "user32.dll", "gdi32.dll", "advapi32.dll",
+            "comctl32.dll", "comdlg32.dll", "shell32.dll", "shlwapi.dll",
+            "ole32.dll", "oleaut32.dll", "rpcrt4.dll", "msvcrt.dll",
+            "winspool.drv", "winmm.dll", "version.dll", "imm32.dll",
+            "wininet.dll", "ws2_32.dll", "crypt32.dll", "secur32.dll",
+            "psapi.dll", "ntdll.dll", "setupapi.dll", "lz32.dll",
+            "mpr.dll", "netapi32.dll", "iphlpapi.dll", "dnsapi.dll",
+            "wintrust.dll", "imagehlp.dll", "uuid.dll"
+          ) | ForEach-Object { $xpSystemDlls[$_] = $true }
+
+          $queue = New-Object System.Collections.ArrayList
+          foreach ($name in $executables) {
+            [void]$queue.Add((Join-Path $bundle $name))
+          }
+          $processed = @{}
+          while ($queue.Count -gt 0) {
+            $image = [string]$queue[0]
+            $queue.RemoveAt(0)
+            $imageName = [System.IO.Path]::GetFileName($image)
+            if ($processed.ContainsKey($imageName.ToLowerInvariant())) { continue }
+            $processed[$imageName.ToLowerInvariant()] = $true
+
+            $headerLines = & objdump -p $image
+            if ($LASTEXITCODE -ne 0) { throw "objdump failed for $imageName" }
+            foreach ($line in $headerLines) {
+              $match = [regex]::Match([string]$line, '^\s*DLL Name:\s*(.+?)\s*$')
+              if (-not $match.Success) { continue }
+              $dll = $match.Groups[1].Value
+              $dllKey = $dll.ToLowerInvariant()
+              if ($dllKey.StartsWith("api-ms-win-") -or $dllKey.StartsWith("ext-ms-win-")) {
+                throw "$imageName imports a post-XP API-set DLL: $dll"
+              }
+              if ($xpSystemDlls.ContainsKey($dllKey)) { continue }
+
+              $runtime = Join-Path $env:W64DEVKIT_BIN $dll
+              if (-not (Test-Path $runtime -PathType Leaf)) {
+                $found = Get-ChildItem -Path $env:W64DEVKIT_BIN -Filter $dll -File -Recurse |
+                  Select-Object -First 1
+                if ($found) { $runtime = $found.FullName }
+              }
+              if (-not (Test-Path $runtime -PathType Leaf)) {
+                throw "Cannot resolve non-system import $dll required by $imageName"
+              }
+              $destination = Join-Path $bundle $dll
+              if (-not (Test-Path $destination -PathType Leaf)) {
+                Copy-Item $runtime $destination
+                [void]$queue.Add($destination)
+              }
+            }
+          }
+
+          $hashes = @{}
+          Get-ChildItem -Path $bundle -File | Sort-Object Name | ForEach-Object {
+            $hashes[$_.Name] = (Get-FileHash -Path $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          }
+          $manifest = [ordered]@{
+            format = 1
+            target = "Windows XP SP3 x86 (i386)"
+            source_commit = $env:GITHUB_SHA
+            workflow_run = $env:GITHUB_RUN_ID
+            files = $hashes
+          }
+          $json = $manifest | ConvertTo-Json -Depth 5
+          $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+          [System.IO.File]::WriteAllText((Join-Path $bundle "manifest.json"), $json, $utf8NoBom)
+
+          # Verify every bundled executable is covered by its generated manifest.
+          $savedManifest = Get-Content (Join-Path $bundle "manifest.json") -Raw | ConvertFrom-Json
+          foreach ($name in $executables) {
+            if (-not $savedManifest.files.PSObject.Properties[$name]) {
+              throw "Manifest omits executable $name"
+            }
+          }
+
+      - name: Upload autonomous XP test bundle
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2, Node 24
+        with:
+          name: BiblioLED-XP-Autotest
+          path: ${{ runner.temp }}/BiblioLED-XP-Autotest/
+          if-no-files-found: error
+          retention-days: 90
+
       - name: Package disposable XP test build
         shell: pwsh
         run: |

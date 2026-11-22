@@ -15,9 +15,11 @@ Confirmed preferences:
 
 ## Proposed architecture
 
-### 1. CI-produced XP test bundle
+### 1. CI-produced XP test bundle — implemented, CI-validated
 
-Extend the existing manual XP workflow to produce a separate **test bundle**, distinct from the user-facing 1.0.0 candidate ZIP. Include:
+The manual XP workflow now produces a separate **test bundle**, distinct from the user-facing 1.0.0 candidate ZIP. Latest bundle: run [44948868882](https://github.com/quilterrantdean/project1/actions/runs/44948868882), commit `a0f6f9f84f9d11010e6b3c8349a1d28b932b6f58`, artifact [`BiblioLED-XP-Autotest` (ID 14724782083)](https://github.com/quilterrantdean/project1/actions/runs/44948868882/artifacts/14724782083), 7,275,905 bytes. It includes the application, all nine test EXEs, required non-system MinGW runtime DLLs, a standard-library Python runner, a Portuguese guide, PE report and per-file SHA-256 manifest. XP CI completed successfully, including recursive resolution of the bundle's non-system imports.
+
+The bundle includes:
 
 - the exact `BiblioLED.exe` built and inspected by that workflow;
 - all nine existing XP-targeted C++ test executables;
@@ -27,7 +29,11 @@ Extend the existing manual XP workflow to produce a separate **test bundle**, di
 
 Do not place a database, settings from the real installation, personal data, or generated test state in the bundle. Keep test output in a unique run-specific directory under `%TEMP%` or a caller-selected scratch directory.
 
-### 2. XP headless test runner
+### 2. XP headless test runner — implemented, actual-XP run pending
+
+`packaging/run_xp_tests.py` is standard-library-only and compatible with Python 3.4+ syntax. It checks the 32-bit Python 3 runtime and every manifest hash, records build/machine/Python/display/memory details locally, gives each test its own working/TEMP/TMP directory, captures output and exit codes, continues after failures, supports bounded repeat runs (up to 25), and returns non-zero on failures. It removes its isolated run folder only after complete success; it preserves logs and summary on failure/interruption. The workflow-generated bundle is the source of truth for executable hashes.
+
+The runner has passed local Python syntax compilation, synthetic manifest/hash/path-safety smoke tests, and packaging in successful XP workflow run 44948868882. It has **not yet been run on Windows XP**. The next gate is running artifact 14724782083 on the user's XP machine with `C:\\Python31018\\python.exe` (or the known Python 3.4.4 fallback), and returning the console result/exit code; failure folders stay local for review.
 
 The runner should:
 

@@ -86,3 +86,15 @@ Current Linux workspace direct C++11 tests for application paths, settings, CSV,
 The original 2099 issue was traced to 32-bit `std::time_t` and `std::mktime` in the XP-targeted runtime. Loan calculations now use 64-bit `LoanTimestamp` and `_mktime64` / `_localtime64`; year-2099 fixtures pass on XP CI.
 
 Remaining release evidence: target hardware/OS, tested ZIP SHA-256 and scenario record; measure performance on the XP machine; continue physical-power-loss testing separately from abrupt-process recovery. The user reports the candidate test was OK, but did not provide details. Do not use actual user data in automated tests. Do not publish a GitHub Release without explicit user approval.
+
+## Arena continuation update — XP automated test bundle
+
+Active session branch is now `arena/c7e089aa-project1`, created from `main` after PR #3 merged. Do not continue on the prior PR branch.
+
+The autonomous-test plan was implemented through the first bundle milestone. `.agent/autonomous-testing-plan.md` records scope and safety requirements. Workflow run [44948868882](https://github.com/quilterrantdean/project1/actions/runs/44948868882) passed on commit `a0f6f9f84f9d11010e6b3c8349a1d28b932b6f58`. Its `BiblioLED-XP-Autotest` artifact (ID `14724782083`, 7,275,905 bytes) contains the application, nine XP test binaries, required MinGW runtime DLLs, a manifest with per-file SHA-256, guide, PE report and Python runner.
+
+`packaging/run_xp_tests.py` uses only the standard library, checks for 32-bit Python 3, verifies manifest hashes, creates isolated per-test working and TEMP/TMP folders, captures logs/exit statuses, continues after test failures, supports `--repeat` 1–25, cleans the run folder on full success and preserves it on failure. Local Python syntax and synthetic manifest/path-safety smoke checks passed. It has not yet been executed on actual XP.
+
+The user reports Python 3.4.4 is on PATH and XP-compatible Python 3.10 is at `C:\\Python31018\\python.exe`; use the explicit 3.10 path first, without changing the global PATH, with 3.4.4 as fallback. Python is x86 and only standard-library tools are wanted. GUI automation was declined; the GUI smoke remains manual at 800 x 600. Never use the real data directory.
+
+Next: ask the user to download artifact 14724782083 from run 44948868882, extract to a dedicated temporary folder, run `C:\\Python31018\\python.exe run_xp_tests.py` (or `python run_xp_tests.py`), and report the final summary/exit code. If failures occur, preserve and inspect the local failure folder. Do not infer that CI execution means actual XP execution.

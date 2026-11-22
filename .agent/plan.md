@@ -2,7 +2,7 @@
 
 ## Current status
 
-**Stage:** 1.0.0 portable release candidate validated by CI and user-reported XP testing. The user clarified that testing is always on the latest build in XP, the focus through 1.0.0, and confirmed the latest candidate test was OK. Associate the report with XP run 44939158463 and its recorded ZIP hash; detailed hardware/OS information and scenario list remain unspecified. This remains a candidate, not an official supported release.
+**Stage:** 1.0.0 portable release candidate with an autonomous XP test bundle now produced by CI. The user clarified testing is always on the latest build in XP and confirmed their latest candidate test passed; that earlier report is associated with run 44939158463. Newest XP build/test-bundle workflow run is 44948868882 on commit `a0f6f9f84f9d11010e6b3c8349a1d28b932b6f58` and passed. The new bundle still requires execution on the actual XP machine. This remains a candidate, not an official supported release.
 
 - Latest XP build/package [44939158463](https://github.com/quilterrantdean/project1/actions/runs/44939158463) passed on commit `d13c767dacaf4bbc717f59ff248f5bd6004c7fd3`: pinned w64devkit x86 build, 9/9 tests, PE32/i386, GUI subsystem 5.01, import/API checks, disposable test artifact, and portable ZIP content validation. Candidate artifact [`BiblioLED-1.0.0-XP-x86-candidate`](https://github.com/quilterrantdean/project1/actions/runs/44939158463/artifacts/14720004028) is 1,570,195 bytes; ZIP SHA-256 is `5c4ae7225d520b8262d8e74f9b6252827ae502a5fa8d0e14b1920697b149ba8e`.
 - Core run [44938469974](https://github.com/quilterrantdean/project1/actions/runs/44938469974) passed Ubuntu tests, modern Win32 compile/store tests, and Cppcheck.
